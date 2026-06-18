@@ -1,0 +1,36 @@
+{
+  "name": "fitconnection-backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "API de FitConnection",
+  "main": "src/server.js",
+  "scripts": {
+    "predev": "prisma generate --config prisma.sqlite.config.js",
+    "dev": "nodemon src/server.js",
+    "build": "npm run prisma:generate",
+    "start": "node src/server.js",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate deploy",
+    "prisma:seed": "prisma db seed",
+    "prisma:generate:sqlite": "prisma generate --config prisma.sqlite.config.js",
+    "prisma:migrate:sqlite": "prisma migrate dev --config prisma.sqlite.config.js",
+    "prisma:seed:sqlite": "npm run prisma:generate:sqlite && prisma db seed --config prisma.sqlite.config.js"
+  },
+  "dependencies": {
+    "@prisma/client": "6.19.3",
+    "bcrypt": "6.0.0",
+    "cors": "2.8.5",
+    "dotenv": "16.6.1",
+    "express": "5.1.0",
+    "jsonwebtoken": "9.0.2",
+    "nodemailer": "^9.0.1",
+    "prisma": "6.19.3"
+  },
+  "devDependencies": {
+    "nodemon": "3.1.10"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
