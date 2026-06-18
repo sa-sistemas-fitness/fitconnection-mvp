@@ -1,0 +1,339 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Usuario {
+  idUsuario       Int                 @id @default(autoincrement()) @map("id_usuario")
+  nombre          String
+  apellido        String
+  email           String              @unique
+  contrasena      String              @map("contrasena")
+  fechaNacimiento DateTime?           @map("fecha_nacimiento")
+  telefono        String?
+  fotoPerfil      String?             @map("foto_perfil")
+  fechaRegistro   DateTime            @default(now()) @map("fecha_registro")
+  ultimoLogin     DateTime?           @map("ultimo_login")
+  idEstadoCuenta  Int                 @map("id_estado_cuenta")
+  estadoCuenta    EstadoCuenta        @relation(fields: [idEstadoCuenta], references: [idEstadoCuenta])
+  roles           UsuarioRol[]
+  cliente         Cliente?
+  entrenador      Entrenador?
+  mensajes        Mensaje[]
+  auditorias      Auditoria[]
+  recuperaciones  TokenRecuperacion[]
+
+  @@index([idEstadoCuenta])
+  @@map("usuario")
+}
+
+model Rol {
+  idRol       Int          @id @default(autoincrement()) @map("id_rol")
+  nombre      String       @unique
+  descripcion String?
+  usuarios    UsuarioRol[]
+
+  @@map("rol")
+}
+
+model UsuarioRol {
+  idUsuario Int     @map("id_usuario")
+  idRol     Int     @map("id_rol")
+  usuario   Usuario @relation(fields: [idUsuario], references: [idUsuario], onDelete: Cascade)
+  rol       Rol     @relation(fields: [idRol], references: [idRol], onDelete: Cascade)
+
+  @@id([idUsuario, idRol])
+  @@index([idRol])
+  @@map("usuario_rol")
+}
+
+model EstadoCuenta {
+  idEstadoCuenta Int       @id @default(autoincrement()) @map("id_estado_cuenta")
+  nombre         String    @unique
+  descripcion    String?
+  usuarios       Usuario[]
+
+  @@map("estado_cuenta")
+}
+
+model Cliente {
+  idCliente          Int                 @id @default(autoincrement()) @map("id_cliente")
+  idUsuario          Int                 @unique @map("id_usuario")
+  objetivoFisico     String?             @map("objetivo_fisico")
+  nivelDeportivo     String?             @map("nivel_deportivo")
+  modalidadPreferida String?             @map("modalidad_preferida")
+  ubicacion          String?
+  usuario            Usuario             @relation(fields: [idUsuario], references: [idUsuario], onDelete: Cascade)
+  solicitudes        SolicitudConexion[]
+  turnos             Turno[]             @relation("TurnosCliente")
+  pagos              Pago[]              @relation("PagosCliente")
+  calificaciones     Calificacion[]      @relation("CalificacionesCliente")
+
+  @@map("cliente")
+}
+
+model Entrenador {
+  idEntrenador         Int                      @id @default(autoincrement()) @map("id_entrenador")
+  idUsuario            Int                      @unique @map("id_usuario")
+  descripcion          String
+  experiencia          Int
+  tarifaBase           Float                    @map("tarifa_base")
+  modalidad            String
+  trabajaConMenores    Boolean                  @default(false) @map("trabaja_con_menores")
+  calificacionPromedio Float                    @default(0) @map("calificacion_promedio")
+  porcentajeComision   Float                    @default(15) @map("porcentaje_comision")
+  idEstadoEntrenador   Int                      @map("id_estado_entrenador")
+  usuario              Usuario                  @relation(fields: [idUsuario], references: [idUsuario], onDelete: Cascade)
+  estado               EstadoEntrenador         @relation(fields: [idEstadoEntrenador], references: [idEstadoEntrenador])
+  especialidades       EntrenadorEspecialidad[]
+  certificaciones      Certificacion[]
+  solicitudes          SolicitudConexion[]
+  turnos               Turno[]                  @relation("TurnosEntrenador")
+  pagos                Pago[]                   @relation("PagosEntrenador")
+  calificaciones       Calificacion[]           @relation("CalificacionesEntrenador")
+
+  @@index([idEstadoEntrenador])
+  @@map("entrenador")
+}
+
+model EstadoEntrenador {
+  idEstadoEntrenador Int          @id @default(autoincrement()) @map("id_estado_entrenador")
+  nombre             String       @unique
+  descripcion        String?
+  entrenadores       Entrenador[]
+
+  @@map("estado_entrenador")
+}
+
+model Especialidad {
+  idEspecialidad Int                      @id @default(autoincrement()) @map("id_especialidad")
+  nombre         String                   @unique
+  descripcion    String?
+  entrenadores   EntrenadorEspecialidad[]
+
+  @@map("especialidad")
+}
+
+model EntrenadorEspecialidad {
+  idEntrenador   Int          @map("id_entrenador")
+  idEspecialidad Int          @map("id_especialidad")
+  entrenador     Entrenador   @relation(fields: [idEntrenador], references: [idEntrenador], onDelete: Cascade)
+  especialidad   Especialidad @relation(fields: [idEspecialidad], references: [idEspecialidad], onDelete: Cascade)
+
+  @@id([idEntrenador, idEspecialidad])
+  @@index([idEspecialidad])
+  @@map("entrenador_especialidad")
+}
+
+model EstadoCertificacion {
+  idEstadoCertificacion Int             @id @default(autoincrement()) @map("id_estado_certificacion")
+  nombre                String          @unique
+  descripcion           String?
+  certificaciones       Certificacion[]
+
+  @@map("estado_certificacion")
+}
+
+model Certificacion {
+  idCertificacion       Int                 @id @default(autoincrement()) @map("id_certificacion")
+  idEntrenador          Int                 @map("id_entrenador")
+  idEstadoCertificacion Int                 @map("id_estado_certificacion")
+  titulo                String
+  entidadEmisora        String              @map("entidad_emisora")
+  fechaEmision          DateTime            @map("fecha_emision")
+  fechaVencimiento      DateTime?           @map("fecha_vencimiento")
+  archivo               String?
+  comentarioAdmin       String?             @map("comentario_admin")
+  fechaRevision         DateTime?           @map("fecha_revision")
+  entrenador            Entrenador          @relation(fields: [idEntrenador], references: [idEntrenador], onDelete: Cascade)
+  estado                EstadoCertificacion @relation(fields: [idEstadoCertificacion], references: [idEstadoCertificacion])
+
+  @@index([idEntrenador])
+  @@index([idEstadoCertificacion])
+  @@map("certificacion")
+}
+
+model EstadoSolicitudConexion {
+  idEstadoSolicitud Int                 @id @default(autoincrement()) @map("id_estado_solicitud")
+  nombre            String              @unique
+  descripcion       String?
+  solicitudes       SolicitudConexion[]
+
+  @@map("estado_solicitud_conexion")
+}
+
+model SolicitudConexion {
+  idSolicitud       Int                     @id @default(autoincrement()) @map("id_solicitud")
+  idCliente         Int                     @map("id_cliente")
+  idEntrenador      Int                     @map("id_entrenador")
+  idEstadoSolicitud Int                     @map("id_estado_solicitud")
+  mensajeInicial    String                  @map("mensaje_inicial")
+  fechaSolicitud    DateTime                @default(now()) @map("fecha_solicitud")
+  fechaRespuesta    DateTime?               @map("fecha_respuesta")
+  cliente           Cliente                 @relation(fields: [idCliente], references: [idCliente])
+  entrenador        Entrenador              @relation(fields: [idEntrenador], references: [idEntrenador])
+  estado            EstadoSolicitudConexion @relation(fields: [idEstadoSolicitud], references: [idEstadoSolicitud])
+  chat              Chat?
+  turnos            Turno[]
+
+  @@index([idCliente])
+  @@index([idEntrenador])
+  @@index([idEstadoSolicitud])
+  @@map("solicitud_conexion")
+}
+
+model Chat {
+  idChat        Int               @id @default(autoincrement()) @map("id_chat")
+  idSolicitud   Int               @unique @map("id_solicitud")
+  fechaCreacion DateTime          @default(now()) @map("fecha_creacion")
+  estadoChat    String            @default("Activo") @map("estado_chat")
+  solicitud     SolicitudConexion @relation(fields: [idSolicitud], references: [idSolicitud], onDelete: Cascade)
+  mensajes      Mensaje[]
+
+  @@map("chat")
+}
+
+model Mensaje {
+  idMensaje  Int      @id @default(autoincrement()) @map("id_mensaje")
+  idChat     Int      @map("id_chat")
+  idUsuario  Int      @map("id_usuario")
+  contenido  String
+  fechaEnvio DateTime @default(now()) @map("fecha_envio")
+  leido      Boolean  @default(false)
+  chat       Chat     @relation(fields: [idChat], references: [idChat], onDelete: Cascade)
+  usuario    Usuario  @relation(fields: [idUsuario], references: [idUsuario])
+
+  @@index([idChat, fechaEnvio])
+  @@index([idUsuario])
+  @@map("mensaje")
+}
+
+model EstadoTurno {
+  idEstadoTurno Int     @id @default(autoincrement()) @map("id_estado_turno")
+  nombre        String  @unique
+  descripcion   String?
+  turnos        Turno[]
+
+  @@map("estado_turno")
+}
+
+model Turno {
+  idTurno           Int               @id @default(autoincrement()) @map("id_turno")
+  idCliente         Int               @map("id_cliente")
+  idEntrenador      Int               @map("id_entrenador")
+  idSolicitud       Int               @map("id_solicitud")
+  idEstadoTurno     Int               @map("id_estado_turno")
+  tarifa            Float
+  fechaSolicitud    DateTime          @default(now()) @map("fecha_solicitud")
+  fechaConfirmacion DateTime?         @map("fecha_confirmacion")
+  fechaInicio       DateTime          @map("fecha_inicio")
+  fechaFin          DateTime          @map("fecha_fin")
+  horaInicio        String            @map("hora_inicio")
+  horaFin           String            @map("hora_fin")
+  modalidad         String
+  motivoCancelacion String?           @map("motivo_cancelacion")
+  observaciones     String?
+  cliente           Cliente           @relation("TurnosCliente", fields: [idCliente], references: [idCliente])
+  entrenador        Entrenador        @relation("TurnosEntrenador", fields: [idEntrenador], references: [idEntrenador])
+  solicitud         SolicitudConexion @relation(fields: [idSolicitud], references: [idSolicitud])
+  estado            EstadoTurno       @relation(fields: [idEstadoTurno], references: [idEstadoTurno])
+  pago              Pago?
+
+  @@index([idCliente])
+  @@index([idEntrenador, fechaInicio])
+  @@index([idSolicitud])
+  @@index([idEstadoTurno])
+  @@map("turno")
+}
+
+model EstadoPago {
+  idEstadoPago Int     @id @default(autoincrement()) @map("id_estado_pago")
+  nombre       String  @unique
+  descripcion  String?
+  pagos        Pago[]
+
+  @@map("estado_pago")
+}
+
+model Pago {
+  idPago       Int           @id @default(autoincrement()) @map("id_pago")
+  idTurno      Int           @unique @map("id_turno")
+  idCliente    Int           @map("id_cliente")
+  idEntrenador Int           @map("id_entrenador")
+  idEstadoPago Int           @map("id_estado_pago")
+  monto        Float
+  descuento    Float         @default(0)
+  comision     Float
+  metodoPago   String        @map("metodo_pago")
+  fechaPago    DateTime?     @map("fecha_pago")
+  turno        Turno         @relation(fields: [idTurno], references: [idTurno])
+  cliente      Cliente       @relation("PagosCliente", fields: [idCliente], references: [idCliente])
+  entrenador   Entrenador    @relation("PagosEntrenador", fields: [idEntrenador], references: [idEntrenador])
+  estado       EstadoPago    @relation(fields: [idEstadoPago], references: [idEstadoPago])
+  calificacion Calificacion?
+
+  @@index([idCliente])
+  @@index([idEntrenador])
+  @@index([idEstadoPago])
+  @@map("pago")
+}
+
+model Calificacion {
+  idCalificacion   Int        @id @default(autoincrement()) @map("id_calificacion")
+  idPago           Int        @unique @map("id_pago")
+  idCliente        Int        @map("id_cliente")
+  idEntrenador     Int        @map("id_entrenador")
+  puntuacion       Int
+  comentario       String?
+  fecha            DateTime   @default(now())
+  estadoModeracion String     @default("Visible") @map("estado_moderacion")
+  pago             Pago       @relation(fields: [idPago], references: [idPago])
+  cliente          Cliente    @relation("CalificacionesCliente", fields: [idCliente], references: [idCliente])
+  entrenador       Entrenador @relation("CalificacionesEntrenador", fields: [idEntrenador], references: [idEntrenador])
+
+  @@index([idCliente])
+  @@index([idEntrenador])
+  @@map("calificacion")
+}
+
+model Auditoria {
+  idAuditoria   Int      @id @default(autoincrement()) @map("id_auditoria")
+  idUsuario     Int?     @map("id_usuario")
+  accion        String
+  tablaAfectada String   @map("tabla_afectada")
+  fecha         DateTime @default(now())
+  ip            String?
+  detalle       String?
+  usuario       Usuario? @relation(fields: [idUsuario], references: [idUsuario], onDelete: SetNull)
+
+  @@index([idUsuario])
+  @@index([fecha])
+  @@map("auditoria")
+}
+
+model TokenRecuperacion {
+  idToken         Int      @id @default(autoincrement()) @map("id_token")
+  idUsuario       Int      @map("id_usuario")
+  token           String   @unique
+  fechaExpiracion DateTime @map("fecha_expiracion")
+  usado           Boolean  @default(false)
+  usuario         Usuario  @relation(fields: [idUsuario], references: [idUsuario], onDelete: Cascade)
+
+  @@index([idUsuario])
+  @@map("token_recuperacion")
+}
+
+model LoginAttempt {
+  idLoginAttempt Int      @id @default(autoincrement()) @map("id_login_attempt")
+  email          String
+  ip             String?
+  fecha          DateTime @default(now())
+  exitoso        Boolean
+
+  @@index([email, fecha])
+  @@map("login_attempt")
+}
