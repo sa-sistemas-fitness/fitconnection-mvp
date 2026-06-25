@@ -42,3 +42,8 @@ temp/
 Thumbs.db
 .idea/
 .vscode/
+
+# Cypress — artefactos de test (no versionar)
+cypress/videos/
+cypress/screenshots/
+cypress/downloads/
