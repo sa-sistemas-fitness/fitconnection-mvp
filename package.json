@@ -11,13 +11,20 @@
     "build": "npm run build --prefix backend && npm run build --prefix frontend",
     "prisma:generate": "npm run prisma:generate --prefix backend",
     "prisma:push": "npm run prisma:push --prefix backend",
-    "prisma:seed": "npm run prisma:seed --prefix backend"
+    "prisma:seed": "npm run prisma:seed --prefix backend",
+    "cypress:open": "cypress open",
+    "cypress:run": "cypress run",
+    "test:e2e": "cypress run"
   },
   "devDependencies": {
-    "concurrently": "^9.2.1"
+    "concurrently": "^9.2.1",
+    "cypress": "^14.5.4"
   },
   "engines": {
     "node": ">=20.19.0",
     "npm": ">=10"
+  },
+  "allowScripts": {
+    "cypress@14.5.4": true
   }
 }
