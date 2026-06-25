@@ -1,8 +1,31 @@
+import "dotenv/config";
+
 import bcrypt from "bcrypt";
+import crypto from "node:crypto";
 
 import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
+const dniHashSecret =
+  process.env.DNI_HASH_SECRET ??
+  process.env.JWT_SECRET ??
+  "fitconnection-local-development-secret";
+
+function normalizeDni(value) {
+  return String(value).replace(/[.\-\s]/g, "").trim();
+}
+
+function dniFields(value) {
+  const normalized = normalizeDni(value);
+  return {
+    dniHash: crypto
+      .createHmac("sha256", dniHashSecret)
+      .update(normalized)
+      .digest("hex"),
+    dniMascara: `**.***.${normalized.slice(-3)}`,
+    dniVerificado: true,
+  };
+}
 
 const catalogs = {
   estadoCuenta: ["Activo", "Suspendido", "Bloqueado", "Inactivo"],
@@ -24,6 +47,7 @@ async function resetDatabase() {
   await prisma.$transaction([
     prisma.loginAttempt.deleteMany(),
     prisma.tokenRecuperacion.deleteMany(),
+    prisma.identidadBloqueada.deleteMany(),
     prisma.auditoria.deleteMany(),
     prisma.calificacion.deleteMany(),
     prisma.pago.deleteMany(),
@@ -113,6 +137,7 @@ async function seedUsers() {
       apellido: "FitConnection",
       email: "admin@fitconnection.com",
       contrasena: adminPassword,
+      ...dniFields("10000001"),
       idEstadoCuenta: activo.idEstadoCuenta,
       roles: { create: { idRol: roleId.Administrador } },
     },
@@ -124,6 +149,7 @@ async function seedUsers() {
       apellido: "Gómez",
       email: "cliente@fitconnection.com",
       contrasena: clientPassword,
+      ...dniFields("10000002"),
       idEstadoCuenta: activo.idEstadoCuenta,
       roles: { create: { idRol: roleId.Cliente } },
       cliente: {
@@ -144,6 +170,7 @@ async function seedUsers() {
       apellido: "Fernández",
       email: "entrenador@fitconnection.com",
       contrasena: trainerPassword,
+      ...dniFields("10000003"),
       idEstadoCuenta: activo.idEstadoCuenta,
       roles: {
         create: [{ idRol: roleId.Cliente }, { idRol: roleId.Entrenador }],
@@ -248,13 +275,14 @@ async function seedUsers() {
     },
   ];
 
-  for (const item of extraTrainers) {
+  for (const [index, item] of extraTrainers.entries()) {
     await prisma.usuario.create({
       data: {
         nombre: item.nombre,
         apellido: item.apellido,
         email: item.email,
         contrasena: trainerPassword,
+        ...dniFields(`1000000${index + 4}`),
         idEstadoCuenta: activo.idEstadoCuenta,
         roles: {
           create: [{ idRol: roleId.Cliente }, { idRol: roleId.Entrenador }],

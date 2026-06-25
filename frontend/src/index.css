@@ -14,6 +14,7 @@
 
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
+html, body, #root { max-width: 100%; overflow-x: hidden; }
 body { margin: 0; min-width: 320px; min-height: 100vh; background: #05060d; }
 button, input, select, textarea { font: inherit; }
 button { cursor: pointer; }
@@ -26,7 +27,7 @@ a { color: inherit; text-decoration: none; }
 
 @layer components {
   .app-shell { @apply min-h-screen bg-[#05060d] text-slate-100; }
-  .page-container { @apply mx-auto w-full max-w-[1500px] px-5 md:px-8 lg:px-10; }
+  .page-container { @apply mx-auto w-full min-w-0 max-w-[1500px] px-5 md:px-8 lg:px-10; }
   .surface { @apply rounded-[26px] border border-white/[0.08] bg-[#0d0f19]; }
   .surface-hover { @apply transition duration-300 hover:-translate-y-1 hover:border-blue-500/40 hover:shadow-[0_22px_60px_rgba(30,86,255,0.12)]; }
   .eyebrow { @apply text-xs font-extrabold uppercase tracking-[0.24em] text-blue-400; }

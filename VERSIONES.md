@@ -9,7 +9,7 @@
 | v0.5 | 2026-06-22 | Pagos, calificaciones y comisiones | SA Sistemas Fitness |
 | v0.6 | 2026-06-22 | Administración de usuarios, certificaciones, pagos, moderación y reportes | SA Sistemas Fitness |
 | v0.9 | 2026-06-22 | Preparación para despliegue | SA Sistemas Fitness |
-| v1.0 | 2026-06-22 | MVP completo FitConnection | SA Sistemas Fitness |
+| v1.0 | 2026-06-25 | MVP completo, configuración local simplificada, recuperación de contraseña, documentación y preparación para despliegue | SA Sistemas Fitness |
 
 Las fechas registran la consolidación de las líneas base durante la
 reconstrucción controlada del historial.

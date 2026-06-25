@@ -7,7 +7,7 @@ import {
   RoleRoute,
 } from "./components/Routes.jsx";
 import { AuthProvider } from "./context/AuthContext.jsx";
-import { LoginPage, RegisterPage } from "./pages/AuthPages.jsx";
+import { ForgotPasswordPage, LoginPage, RegisterPage, ResetPasswordPage } from "./pages/AuthPages.jsx";
 import { AdminDashboardPage } from "./pages/AdminDashboardPage.jsx";
 import { AdminCertificationsPage } from "./pages/AdminCertificationsPage.jsx";
 import { AdminCommissionsPage } from "./pages/AdminCommissionsPage.jsx";
@@ -46,6 +46,8 @@ export function App() {
         <Route element={<LandingPage />} path="/" />
         <Route element={<LoginPage />} path="/login" />
         <Route element={<RegisterPage />} path="/registro" />
+        <Route element={<ForgotPasswordPage />} path="/recuperar-contrasena" />
+        <Route element={<ResetPasswordPage />} path="/restablecer-contrasena" />
         <Route
           element={
             <ProtectedRoute>

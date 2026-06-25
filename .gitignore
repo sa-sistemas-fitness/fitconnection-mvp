@@ -1,14 +1,20 @@
 # Dependencias
 node_modules/
+backend/node_modules/
+frontend/node_modules/
 
 # Compilaciones y cobertura
 dist/
+backend/dist/
+frontend/dist/
 build/
 coverage/
 
 # Variables de entorno y secretos
 .env
 .env.*
+backend/.env
+frontend/.env
 !.env.example
 
 # Bases de datos locales
@@ -16,10 +22,12 @@ coverage/
 *.db-journal
 *.sqlite
 *.sqlite3
+backend/prisma/dev.db
 
 # Logs y archivos temporales
 *.log
 *.err
+npm-debug.log*
 *.tmp
 *.temp
 *.swp

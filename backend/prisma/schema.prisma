@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -13,6 +13,9 @@ model Usuario {
   apellido        String
   email           String              @unique
   contrasena      String              @map("contrasena")
+  dniHash         String              @unique @map("dni_hash")
+  dniMascara      String              @map("dni_mascara")
+  dniVerificado   Boolean             @default(false) @map("dni_verificado")
   fechaNacimiento DateTime?           @map("fecha_nacimiento")
   telefono        String?
   fotoPerfil      String?             @map("foto_perfil")
@@ -26,8 +29,10 @@ model Usuario {
   mensajes        Mensaje[]
   auditorias      Auditoria[]
   recuperaciones  TokenRecuperacion[]
+  bloqueosDniAdmin IdentidadBloqueada[] @relation("BloqueosDniAdmin")
 
   @@index([idEstadoCuenta])
+  @@index([dniHash])
   @@map("usuario")
 }
 
@@ -325,6 +330,22 @@ model TokenRecuperacion {
 
   @@index([idUsuario])
   @@map("token_recuperacion")
+}
+
+model IdentidadBloqueada {
+  idIdentidadBloqueada Int       @id @default(autoincrement()) @map("id_identidad_bloqueada")
+  dniHash              String    @map("dni_hash")
+  dniMascara           String    @map("dni_mascara")
+  motivo               String
+  fechaBloqueo         DateTime  @default(now()) @map("fecha_bloqueo")
+  idAdmin              Int       @map("id_admin")
+  activa               Boolean   @default(true)
+  fechaDesbloqueo      DateTime? @map("fecha_desbloqueo")
+  admin                Usuario   @relation("BloqueosDniAdmin", fields: [idAdmin], references: [idUsuario])
+
+  @@index([dniHash, activa])
+  @@index([idAdmin])
+  @@map("identidad_bloqueada")
 }
 
 model LoginAttempt {

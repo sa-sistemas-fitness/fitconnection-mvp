@@ -18,3 +18,14 @@ export async function updateStatus(request, response) {
     ),
   });
 }
+
+export async function updateAccess(request, response) {
+  response.json(
+    await service.updateUserAccess(
+      parseId(request.params.id),
+      request.body.action,
+      { userId: request.auth.userId, ip: request.ip },
+      request.body.reason,
+    ),
+  );
+}

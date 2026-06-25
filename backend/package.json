@@ -6,16 +6,15 @@
   "description": "API de FitConnection",
   "main": "src/server.js",
   "scripts": {
-    "predev": "prisma generate --config prisma.sqlite.config.js",
     "dev": "nodemon src/server.js",
     "build": "npm run prisma:generate",
     "start": "node src/server.js",
-    "prisma:generate": "prisma generate",
-    "prisma:migrate": "prisma migrate deploy",
-    "prisma:seed": "prisma db seed",
-    "prisma:generate:sqlite": "prisma generate --config prisma.sqlite.config.js",
-    "prisma:migrate:sqlite": "prisma migrate dev --config prisma.sqlite.config.js",
-    "prisma:seed:sqlite": "npm run prisma:generate:sqlite && prisma db seed --config prisma.sqlite.config.js"
+    "prisma:generate": "prisma generate --schema=prisma/schema.prisma",
+    "prisma:push": "prisma db push --schema=prisma/schema.prisma",
+    "prisma:seed": "node prisma/seed.js",
+    "prisma:studio": "prisma studio --schema=prisma/schema.prisma",
+    "prisma:generate:postgres": "prisma generate --schema=prisma/schema.postgresql.prisma",
+    "prisma:migrate:postgres": "prisma migrate deploy --schema=prisma/schema.postgresql.prisma"
   },
   "dependencies": {
     "@prisma/client": "6.19.3",

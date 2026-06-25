@@ -77,6 +77,24 @@ dependencias posteriores se documentan en el mapeo.
 Después de la reconstrucción inicial no se realizan cambios funcionales
 directamente sobre `main`.
 
+## Arranque local recomendado
+
+Desde la raíz del repositorio:
+
+```bash
+npm install
+npm run install:all
+npm run prisma:generate
+npm run prisma:push
+npm run prisma:seed
+npm run dev
+```
+
+Este flujo usa SQLite local mediante `backend/prisma/schema.prisma` y no ejecuta
+la configuración PostgreSQL de producción. PostgreSQL queda reservado para los
+scripts explícitos `prisma:generate:postgres` y `prisma:migrate:postgres` dentro
+de `backend`.
+
 ## Elementos excluidos
 
 `.gitignore` impide versionar:

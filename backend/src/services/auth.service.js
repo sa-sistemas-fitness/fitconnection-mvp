@@ -8,6 +8,7 @@ import { prisma } from "../lib/prisma.js";
 import { toPublicUser, userInclude } from "../utils/user-response.js";
 import { audit } from "./audit.service.js";
 import { sendEmail } from "./email.service.js";
+import { getDniIdentity } from "../utils/dni.js";
 
 function normalizeEmail(email) {
   return String(email ?? "").trim().toLowerCase();
@@ -25,11 +26,12 @@ export async function registerUser(body, ip) {
   const apellido = String(body.apellido ?? "").trim();
   const email = normalizeEmail(body.email);
   const password = String(body.password ?? "");
+  const dni = getDniIdentity(body.dni);
 
   if (!nombre || !apellido || !email || !password) {
     throw new ApiError(
       400,
-      "Nombre, apellido, email y contraseña son obligatorios.",
+      "Nombre, apellido, email, DNI y contraseña son obligatorios.",
     );
   }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -46,6 +48,18 @@ export async function registerUser(body, ip) {
   }
   if (await prisma.usuario.findUnique({ where: { email } })) {
     throw new ApiError(409, "El email ya está registrado.");
+  }
+  const blockedIdentity = await prisma.identidadBloqueada.findFirst({
+    where: { dniHash: dni.hash, activa: true },
+  });
+  if (blockedIdentity) {
+    throw new ApiError(
+      403,
+      "No es posible completar el registro. Contacta al soporte.",
+    );
+  }
+  if (await prisma.usuario.findUnique({ where: { dniHash: dni.hash } })) {
+    throw new ApiError(409, "El DNI ya está registrado.");
   }
 
   const [activeState, clientRole] = await Promise.all([
@@ -65,6 +79,9 @@ export async function registerUser(body, ip) {
       apellido,
       email,
       contrasena: await bcrypt.hash(password, 12),
+      dniHash: dni.hash,
+      dniMascara: dni.mask,
+      dniVerificado: false,
       telefono: body.telefono ? String(body.telefono).trim() : null,
       fechaNacimiento: birthDate,
       idEstadoCuenta: activeState.idEstadoCuenta,
@@ -161,16 +178,25 @@ export async function forgotPassword(body) {
         fechaExpiracion: new Date(Date.now() + 60 * 60 * 1000),
       },
     });
-    await sendEmail({
-      to: user.email,
-      subject: "Recuperación de contraseña - FitConnection",
-      text: `Usá este token durante la próxima hora: ${rawToken}`,
-    });
+    const recoveryLink = `${env.frontendUrl.replace(/\/+$/, "")}/restablecer-contrasena?token=${rawToken}`;
+    try {
+      await sendEmail({
+        to: user.email,
+        subject: "Recuperación de contraseña - FitConnection",
+        text: `Recuperá tu contraseña desde este enlace durante la próxima hora: ${recoveryLink}`,
+        html: `<p>Recibimos una solicitud para recuperar tu contraseña.</p><p><a href="${recoveryLink}">Restablecer contraseña</a></p><p>El enlace vence en 1 hora.</p>`,
+        recoveryLink,
+      });
+    } catch {
+      console.error(
+        "[AUTH] No se pudo enviar el email de recuperación. Se mantiene la respuesta genérica por seguridad.",
+      );
+    }
   }
 
   return {
     message:
-      "Si el email existe, enviamos instrucciones para recuperar la contraseña.",
+      "Si el correo está registrado, recibirás instrucciones para recuperar tu contraseña.",
   };
 }
 
@@ -185,12 +211,11 @@ export async function resetPassword(body, ip) {
   const recovery = await prisma.tokenRecuperacion.findUnique({
     where: { token: tokenHash },
   });
-  if (
-    !recovery ||
-    recovery.usado ||
-    recovery.fechaExpiracion.getTime() < Date.now()
-  ) {
-    throw new ApiError(400, "El token es inválido o venció.");
+  if (!recovery || recovery.usado) {
+    throw new ApiError(400, "El token es inválido.");
+  }
+  if (recovery.fechaExpiracion.getTime() < Date.now()) {
+    throw new ApiError(400, "El token expiró.");
   }
 
   await prisma.$transaction([

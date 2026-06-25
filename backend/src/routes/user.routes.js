@@ -9,4 +9,5 @@ export const userRouter = Router();
 userRouter.use(authRequired, requireAdmin);
 userRouter.get("/", asyncHandler(controller.list));
 userRouter.get("/:id", asyncHandler(controller.getById));
+userRouter.patch("/:id/access", asyncHandler(controller.updateAccess));
 userRouter.patch("/:id/status", asyncHandler(controller.updateStatus));

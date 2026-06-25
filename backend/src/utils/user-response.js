@@ -4,6 +4,8 @@ export function toPublicUser(user) {
     nombre: user.nombre,
     apellido: user.apellido,
     email: user.email,
+    dniMascara: user.dniMascara,
+    dniVerificado: user.dniVerificado,
     fechaRegistro: user.fechaRegistro,
     ultimoLogin: user.ultimoLogin,
     estadoCuenta: user.estadoCuenta.nombre,
