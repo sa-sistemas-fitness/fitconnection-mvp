@@ -37,7 +37,7 @@ export function LoginPage() {
   const [form, setForm] = useState({ email: "cliente@fitconnection.com", password: "cliente123" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  if (user) return <Navigate to="/panel" />;
+  if (user) return <Navigate to={location.state?.from ?? "/panel"} />;
   const submit = async (event) => {
     event.preventDefault(); setLoading(true); setError("");
     try {

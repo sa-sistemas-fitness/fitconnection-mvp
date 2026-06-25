@@ -1,0 +1,14 @@
+{
+  "admin": {
+    "email": "admin@fitconnection.com",
+    "password": "admin123"
+  },
+  "cliente": {
+    "email": "cliente@fitconnection.com",
+    "password": "cliente123"
+  },
+  "entrenador": {
+    "email": "entrenador@fitconnection.com",
+    "password": "entrenador123"
+  }
+}
