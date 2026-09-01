@@ -26,7 +26,6 @@ describe("CP-05: Pago rechazado — error de pasarela simulado", () => {
           idPago: 998,
           idTurno: 1,
           monto: 5000,
-          descuento: 0,
           metodoPago: "Tarjeta simulada",
           estado: { nombre: "Rechazado" },
         },

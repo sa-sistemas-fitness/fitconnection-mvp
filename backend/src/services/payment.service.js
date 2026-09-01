@@ -1,8 +1,9 @@
 import { ApiError } from "../errors/api-error.js";
 import { prisma } from "../lib/prisma.js";
-import { optionalString, requiredNumber, requiredString } from "../utils/request.js";
+import { optionalString, requiredString } from "../utils/request.js";
 import { audit } from "./audit.service.js";
 import { sendEmail } from "./email.service.js";
+import { calculateCommission } from "./commission.service.js";
 
 const include = {
   estado: true,
@@ -48,13 +49,6 @@ export async function createPayment(auth, body, ip) {
     throw new ApiError(409, "El pago ya tiene una calificación asociada.");
   }
 
-  const discount =
-    body.descuento == null
-      ? 0
-      : requiredNumber(body.descuento, "descuento", { min: 0 });
-  if (discount > turn.tarifa) {
-    throw new ApiError(400, "El descuento no puede superar la tarifa.");
-  }
   const simulatedResult = String(body.resultado ?? "Aprobado").trim();
   if (!["Aprobado", "Rechazado"].includes(simulatedResult)) {
     throw new ApiError(
@@ -65,17 +59,18 @@ export async function createPayment(auth, body, ip) {
   const paymentState = await prisma.estadoPago.findUniqueOrThrow({
     where: { nombre: simulatedResult },
   });
-  const amount = turn.tarifa - discount;
-  const commission = Number(
-    ((amount * turn.entrenador.porcentajeComision) / 100).toFixed(2),
+  const breakdown = calculateCommission(
+    turn.tarifa,
+    turn.entrenador.porcentajeComision,
   );
+  const amount = breakdown.importeBruto;
   const paymentData = {
     idEstadoPago: paymentState.idEstadoPago,
     monto: amount,
-    descuento: discount,
-    comision: commission,
+    comision: breakdown.comision,
+    porcentajeComisionAplicado: breakdown.porcentajeComision,
     metodoPago: requiredString(body.metodoPago, "metodoPago"),
-    fechaPago: new Date(),
+    fechaPago: simulatedResult === "Aprobado" ? new Date() : null,
   };
   const payment = turn.pago
     ? await prisma.pago.update({

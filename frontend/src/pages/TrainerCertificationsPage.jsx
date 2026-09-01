@@ -24,6 +24,7 @@ const emptyForm = {
   fechaEmision: "",
   fechaVencimiento: "",
   archivo: "",
+  habilitaMenores: false,
 };
 
 const tone = {
@@ -222,6 +223,10 @@ export function TrainerCertificationsPage() {
               type="date"
               value={form.fechaVencimiento}
             />
+            <label className="flex items-center gap-3 rounded-2xl border border-white/10 p-4 md:col-span-2">
+              <input checked={form.habilitaMenores} className="size-4 accent-blue-500" onChange={(event) => setForm({ ...form, habilitaMenores: event.target.checked })} type="checkbox" />
+              <span className="text-sm text-slate-300">Esta certificación acredita trabajo con menores y requiere aprobación administrativa.</span>
+            </label>
             <label className="block md:col-span-2">
               <span className="mb-2 block text-sm font-semibold text-slate-300">
                 Archivo simulado
@@ -301,6 +306,10 @@ export function TrainerCertificationsPage() {
                     <strong className="truncate">
                       {certification.archivo || "No informado"}
                     </strong>
+                  </p>
+                  <p className="flex items-center justify-between gap-4">
+                    <span className="text-slate-500">Trabajo con menores</span>
+                    <strong>{certification.habilitaMenores ? "Solicitado" : "No aplica"}</strong>
                   </p>
                 </div>
                 {certification.estado.nombre === "Rechazado" && (

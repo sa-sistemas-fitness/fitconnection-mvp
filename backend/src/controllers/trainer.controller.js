@@ -1,8 +1,9 @@
 import * as service from "../services/trainer.service.js";
 import { parseId } from "../utils/request.js";
+import * as availabilityService from "../services/availability.service.js";
 
 export async function list(request, response) {
-  response.json({ trainers: await service.listApprovedTrainers(request.query) });
+  response.json({ trainers: await service.listApprovedTrainers(request.query, request.auth) });
 }
 export async function getById(request, response) {
   response.json({
@@ -39,4 +40,18 @@ export async function reject(request, response) {
       request.body.comment,
     ),
   });
+}
+
+export async function publicAvailability(request, response) {
+  response.json(await availabilityService.listTrainerAvailability(parseId(request.params.id), request.auth));
+}
+export async function myAvailability(request, response) {
+  response.json({ slots: await availabilityService.listMyAvailability(request.auth.trainerId) });
+}
+export async function createAvailability(request, response) {
+  response.status(201).json({ slot: await availabilityService.createAvailability(request.auth.trainerId, request.body) });
+}
+export async function deleteAvailability(request, response) {
+  await availabilityService.deleteAvailability(request.auth.trainerId, parseId(request.params.availabilityId));
+  response.status(204).end();
 }

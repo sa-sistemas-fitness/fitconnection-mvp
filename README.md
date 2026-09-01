@@ -34,6 +34,8 @@ desea y gestione turnos, pagos y comunicación dentro de una misma plataforma.
 ## Funcionalidades principales
 
 - Registro, login, roles y recuperación de contraseña.
+- Fecha de nacimiento obligatoria y edad calculada por el backend.
+- Protección automática de menores en búsquedas, perfiles y solicitudes.
 - Marketplace de entrenadores con filtros.
 - Perfil público de entrenador.
 - Solicitudes de conexión cliente-entrenador.
@@ -44,6 +46,21 @@ desea y gestione turnos, pagos y comunicación dentro de una misma plataforma.
 - Panel administrador y reportes.
 - Bloqueo de cuenta y DNI desde administración.
 - Preparación para despliegue frontend/backend.
+
+## Reglas críticas del MVP
+
+- La edad nunca se recibe como una declaración del usuario: se deriva de
+  `fechaNacimiento` mediante una función centralizada.
+- Un cliente menor sólo puede encontrar, consultar y contactar entrenadores
+  autorizados por Administración para trabajar con menores.
+- La autorización para menores requiere una certificación marcada para ese fin
+  y validada por Administración. Subir el archivo no concede autorización.
+- La disponibilidad semanal del entrenador se persiste en la base de datos.
+  Crear y aceptar un turno vuelve a comprobar disponibilidad y solapamientos en
+  una transacción serializable.
+- La comisión se calcula en backend y cada pago conserva el porcentaje aplicado,
+  el importe bruto, la comisión y el neto del entrenador.
+- El MVP no admite descuentos ni promociones.
 
 ## Stack tecnológico
 
@@ -253,6 +270,10 @@ El entrenador seed está aprobado y cuenta con perfil/certificación de ejemplo.
 También se cargan entrenadores adicionales para visualizar marketplace y
 reportes.
 
+Después de actualizar una instalación existente, aplicar las migraciones antes
+de iniciar la API. Las filas históricas sin fecha de nacimiento reciben una
+fecha técnica de migración y deben ser revisadas administrativamente.
+
 ## Recuperación de contraseña y SMTP Gmail
 
 Endpoint:
@@ -270,6 +291,8 @@ Comportamiento:
   recuperación.
 - El token nunca se devuelve en la respuesta HTTP.
 - La respuesta no revela si el email existe.
+- El token se almacena hasheado, vence en una hora, se consume de forma atómica
+  y no puede reutilizarse.
 - No guardar credenciales SMTP reales en GitHub.
 
 Variables Gmail recomendadas:
@@ -287,6 +310,27 @@ FRONTEND_URL="http://localhost:5173"
 Al iniciar el backend se ejecuta `transporter.verify()` y se informa por consola
 si SMTP está configurado correctamente, si no está configurado o si hay error de
 autenticación.
+
+## Pruebas
+
+Las reglas centrales del backend se verifican con el runner nativo de Node:
+
+```bash
+cd backend
+npm test
+```
+
+Las pruebas E2E existentes se ejecutan desde la raíz con `npm run test:e2e`
+después de levantar frontend, backend y una base inicializada.
+
+## Fuera del MVP / Desarrollo futuro
+
+- Desarrollo futuro — Parametrización de máximos y mínimos.
+- Subsistema Fintech avanzado — Desarrollo futuro.
+- Descuentos/promociones.
+- Billetera, transferencias, conciliación y liquidaciones financieras avanzadas.
+
+Estas capacidades no tienen pantallas ni configuraciones parciales en el MVP.
 
 ## Desarrollo local con SQLite
 

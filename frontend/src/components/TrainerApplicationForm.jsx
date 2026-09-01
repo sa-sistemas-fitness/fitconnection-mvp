@@ -9,6 +9,7 @@ const emptyCertification = {
   fechaEmision: "",
   fechaVencimiento: "",
   archivo: "",
+  habilitaMenores: false,
 };
 
 export function TrainerApplicationForm({
@@ -22,7 +23,6 @@ export function TrainerApplicationForm({
     experiencia: initialTrainer?.experiencia ?? 1,
     tarifaBase: initialTrainer?.tarifaBase ?? 15000,
     modalidad: initialTrainer?.modalidad ?? "Online",
-    trabajaConMenores: initialTrainer?.trabajaConMenores ?? false,
     specialtyIds:
       initialTrainer?.especialidades?.map(({ idEspecialidad }) =>
         String(idEspecialidad),
@@ -114,19 +114,9 @@ export function TrainerApplicationForm({
             <option>Presencial</option>
             <option>Híbrida</option>
           </Select>
-          <Select
-            label="¿Trabajás con menores?"
-            onChange={(event) =>
-              setForm({
-                ...form,
-                trabajaConMenores: event.target.value === "true",
-              })
-            }
-            value={String(form.trabajaConMenores)}
-          >
-            <option value="false">No</option>
-            <option value="true">Sí</option>
-          </Select>
+          <div className="rounded-2xl border border-blue-500/20 bg-blue-500/10 p-4 text-sm text-blue-200">
+            La autorización para trabajar con menores la concede Administración al aprobar una certificación específica.
+          </div>
           <fieldset className="md:col-span-2">
             <legend className="text-sm font-semibold text-slate-300">
               Especialidades
@@ -224,6 +214,10 @@ export function TrainerApplicationForm({
             type="date"
             value={certification.fechaVencimiento}
           />
+          <label className="flex items-center gap-3 rounded-2xl border border-white/10 p-4 md:col-span-2">
+            <input checked={certification.habilitaMenores} className="size-4 accent-blue-500" onChange={(event) => setCertification({ ...certification, habilitaMenores: event.target.checked })} type="checkbox" />
+            <span className="text-sm text-slate-300">Solicitar que esta certificación sea evaluada como habilitación para trabajar con menores.</span>
+          </label>
           <label className="block md:col-span-2">
             <span className="mb-2 block text-sm font-semibold text-slate-300">
               Archivo simulado

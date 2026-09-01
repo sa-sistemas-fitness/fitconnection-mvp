@@ -159,6 +159,11 @@ export function TrainerPaymentsPage() {
                   render: (payment) => money(payment.monto),
                 },
                 {
+                  key: "rate",
+                  label: "% comisión",
+                  render: (payment) => `${payment.porcentajeComisionAplicado}%`,
+                },
+                {
                   key: "commission",
                   label: "Comisión",
                   render: (payment) => money(payment.comision),

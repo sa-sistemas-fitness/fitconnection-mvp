@@ -109,7 +109,6 @@ export function MyTurnsPage() {
   const [feedback, setFeedback] = useState({ type: "", message: "" });
   const [cancelReason, setCancelReason] = useState("");
   const [paymentForm, setPaymentForm] = useState({
-    descuento: 0,
     metodoPago: "Tarjeta simulada",
     resultado: "Aprobado",
   });
@@ -167,10 +166,7 @@ export function MyTurnsPage() {
   const selectedPayment = selectedTurn
     ? paymentByTurn.get(selectedTurn.idTurno)
     : null;
-  const discount = Math.max(0, Number(paymentForm.descuento) || 0);
-  const paymentTotal = selectedTurn
-    ? Math.max(0, selectedTurn.tarifa - discount)
-    : 0;
+  const paymentTotal = selectedTurn?.tarifa ?? 0;
 
   const openModal = (type, turn) => {
     setSelectedTurn(turn);
@@ -180,7 +176,6 @@ export function MyTurnsPage() {
     if (type === "payment") {
       const previousPayment = paymentByTurn.get(turn.idTurno);
       setPaymentForm({
-        descuento: previousPayment?.descuento ?? 0,
         metodoPago: previousPayment?.metodoPago ?? "Tarjeta simulada",
         resultado: "Aprobado",
       });
@@ -224,19 +219,11 @@ export function MyTurnsPage() {
   };
 
   const confirmPayment = async () => {
-    if (discount > selectedTurn.tarifa) {
-      setFeedback({
-        type: "error",
-        message: "El descuento no puede superar la tarifa.",
-      });
-      return;
-    }
     setSubmitting(true);
     setFeedback({ type: "", message: "" });
     try {
       const { data } = await api.post("/payments", {
         turnId: selectedTurn.idTurno,
-        descuento: discount,
         metodoPago: paymentForm.metodoPago,
         resultado: paymentForm.resultado,
       });
@@ -582,24 +569,6 @@ export function MyTurnsPage() {
           <>
             <TurnSummary turn={selectedTurn} payment={selectedPayment} />
             <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              <label className="block">
-                <span className="mb-2 block text-sm font-semibold text-slate-300">
-                  Descuento
-                </span>
-                <input
-                  className="w-full rounded-2xl border border-white/10 bg-[#10131f] px-4 py-3.5 text-white outline-none focus:border-blue-500/70"
-                  max={selectedTurn.tarifa}
-                  min="0"
-                  onChange={(event) =>
-                    setPaymentForm({
-                      ...paymentForm,
-                      descuento: event.target.value,
-                    })
-                  }
-                  type="number"
-                  value={paymentForm.descuento}
-                />
-              </label>
               <Select
                 label="Método de pago"
                 onChange={(event) =>
@@ -634,10 +603,6 @@ export function MyTurnsPage() {
               <div className="flex justify-between text-sm text-slate-400">
                 <span>Monto</span>
                 <span>{money(selectedTurn.tarifa)}</span>
-              </div>
-              <div className="mt-2 flex justify-between text-sm text-slate-400">
-                <span>Descuento</span>
-                <span>− {money(discount)}</span>
               </div>
               <div className="mt-4 flex justify-between border-t border-white/10 pt-4">
                 <strong>Total</strong>

@@ -38,6 +38,7 @@ export async function createCertification(userId, body) {
         ? requiredDate(body.fechaVencimiento, "fechaVencimiento")
         : null,
       archivo: optionalString(body.archivo),
+      habilitaMenores: body.habilitaMenores === true,
     },
     include,
   });
@@ -83,14 +84,31 @@ async function reviewCertification(id, approved, actor, comment) {
   const state = await prisma.estadoCertificacion.findUniqueOrThrow({
     where: { nombre: stateName },
   });
-  const updated = await prisma.certificacion.update({
-    where: { idCertificacion: id },
-    data: {
-      idEstadoCertificacion: state.idEstadoCertificacion,
-      comentarioAdmin: optionalString(comment),
-      fechaRevision: new Date(),
-    },
-    include,
+  const updated = await prisma.$transaction(async (tx) => {
+    const result = await tx.certificacion.update({
+      where: { idCertificacion: id },
+      data: {
+        idEstadoCertificacion: state.idEstadoCertificacion,
+        comentarioAdmin: optionalString(comment),
+        fechaRevision: new Date(),
+      },
+      include,
+    });
+    if (certification.habilitaMenores) {
+      const approvedMinorCertificates = await tx.certificacion.count({
+        where: {
+          idEntrenador: certification.idEntrenador,
+          habilitaMenores: true,
+          estado: { nombre: "Validado" },
+          OR: [{ fechaVencimiento: null }, { fechaVencimiento: { gte: new Date() } }],
+        },
+      });
+      await tx.entrenador.update({
+        where: { idEntrenador: certification.idEntrenador },
+        data: { trabajaConMenores: approvedMinorCertificates > 0 },
+      });
+    }
+    return result;
   });
 
   await audit({

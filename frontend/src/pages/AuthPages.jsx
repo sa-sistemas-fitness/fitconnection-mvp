@@ -72,7 +72,7 @@ export function LoginPage() {
 export function RegisterPage() {
   const { user, authenticate } = useAuth();
   const navigate = useNavigate();
-  const [form, setForm] = useState({ nombre: "", apellido: "", email: "", dni: "", password: "", ubicacion: "" });
+  const [form, setForm] = useState({ nombre: "", apellido: "", email: "", dni: "", fechaNacimiento: "", password: "", ubicacion: "" });
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   if (user) return <Navigate to="/panel" />;
@@ -95,6 +95,7 @@ export function RegisterPage() {
         <div className="grid grid-cols-2 gap-4"><Input label="Nombre" name="nombre" onChange={update} value={form.nombre} /><Input label="Apellido" name="apellido" onChange={update} value={form.apellido} /></div>
         <Input label="Email" name="email" onChange={update} type="email" value={form.email} />
         <Input label="DNI" inputMode="numeric" name="dni" onChange={update} placeholder="Sin puntos ni guiones" value={form.dni} />
+        <Input label="Fecha de nacimiento" max={new Date().toISOString().slice(0, 10)} name="fechaNacimiento" onChange={update} required type="date" value={form.fechaNacimiento} />
         <Input label="Contraseña" minLength={6} name="password" onChange={update} type="password" value={form.password} />
         <Input label="Ubicación" name="ubicacion" onChange={update} placeholder="Buenos Aires" value={form.ubicacion} />
         {error && <p className="rounded-xl bg-rose-500/10 p-3 text-sm text-rose-300">{error}</p>}

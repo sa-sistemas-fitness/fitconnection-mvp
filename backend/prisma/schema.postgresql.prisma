@@ -16,7 +16,7 @@ model Usuario {
   dniHash         String              @unique @map("dni_hash")
   dniMascara      String              @map("dni_mascara")
   dniVerificado   Boolean             @default(false) @map("dni_verificado")
-  fechaNacimiento DateTime?           @map("fecha_nacimiento")
+  fechaNacimiento DateTime            @map("fecha_nacimiento")
   telefono        String?
   fotoPerfil      String?             @map("foto_perfil")
   fechaRegistro   DateTime            @default(now()) @map("fecha_registro")
@@ -96,6 +96,7 @@ model Entrenador {
   estado               EstadoEntrenador         @relation(fields: [idEstadoEntrenador], references: [idEstadoEntrenador])
   especialidades       EntrenadorEspecialidad[]
   certificaciones      Certificacion[]
+  disponibilidades     DisponibilidadEntrenador[]
   solicitudes          SolicitudConexion[]
   turnos               Turno[]                  @relation("TurnosEntrenador")
   pagos                Pago[]                   @relation("PagosEntrenador")
@@ -152,6 +153,7 @@ model Certificacion {
   fechaEmision          DateTime            @map("fecha_emision")
   fechaVencimiento      DateTime?           @map("fecha_vencimiento")
   archivo               String?
+  habilitaMenores       Boolean             @default(false) @map("habilita_menores")
   comentarioAdmin       String?             @map("comentario_admin")
   fechaRevision         DateTime?           @map("fecha_revision")
   entrenador            Entrenador          @relation(fields: [idEntrenador], references: [idEntrenador], onDelete: Cascade)
@@ -160,6 +162,22 @@ model Certificacion {
   @@index([idEntrenador])
   @@index([idEstadoCertificacion])
   @@map("certificacion")
+}
+
+model DisponibilidadEntrenador {
+  idDisponibilidad Int        @id @default(autoincrement()) @map("id_disponibilidad")
+  idEntrenador     Int        @map("id_entrenador")
+  diaSemana        Int        @map("dia_semana")
+  horaInicio       String     @map("hora_inicio")
+  horaFin          String     @map("hora_fin")
+  modalidad        String
+  observaciones    String?
+  activa           Boolean    @default(true)
+  entrenador       Entrenador @relation(fields: [idEntrenador], references: [idEntrenador], onDelete: Cascade)
+
+  @@unique([idEntrenador, diaSemana, horaInicio, horaFin, modalidad])
+  @@index([idEntrenador, diaSemana, activa])
+  @@map("disponibilidad_entrenador")
 }
 
 model EstadoSolicitudConexion {
@@ -271,8 +289,8 @@ model Pago {
   idEntrenador Int           @map("id_entrenador")
   idEstadoPago Int           @map("id_estado_pago")
   monto        Float
-  descuento    Float         @default(0)
   comision     Float
+  porcentajeComisionAplicado Float @map("porcentaje_comision_aplicado")
   metodoPago   String        @map("metodo_pago")
   fechaPago    DateTime?     @map("fecha_pago")
   turno        Turno         @relation(fields: [idTurno], references: [idTurno])

@@ -6,7 +6,9 @@ import { asyncHandler } from "../utils/async-handler.js";
 
 export const userRouter = Router();
 
-userRouter.use(authRequired, requireAdmin);
+userRouter.use(authRequired);
+userRouter.patch("/me", asyncHandler(controller.updateMe));
+userRouter.use(requireAdmin);
 userRouter.get("/", asyncHandler(controller.list));
 userRouter.get("/:id", asyncHandler(controller.getById));
 userRouter.patch("/:id/access", asyncHandler(controller.updateAccess));

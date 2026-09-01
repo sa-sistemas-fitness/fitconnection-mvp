@@ -1,3 +1,4 @@
+import { reportDateWhere } from "../utils/report-period.js";
 import { ApiError } from "../errors/api-error.js";
 import { prisma } from "../lib/prisma.js";
 
@@ -53,9 +54,11 @@ export async function adminOverview() {
   };
 }
 
-export async function connectionReport() {
+export async function connectionReport(query = {}) {
+  const periodWhere = reportDateWhere(query, "fechaSolicitud");
   const groups = await prisma.solicitudConexion.groupBy({
     by: ["idEstadoSolicitud"],
+    where: periodWhere,
     _count: true,
   });
   const states = await prisma.estadoSolicitudConexion.findMany();
@@ -63,6 +66,7 @@ export async function connectionReport() {
     states.map((state) => [state.idEstadoSolicitud, state.nombre]),
   );
   const recent = await prisma.solicitudConexion.findMany({
+    where: periodWhere,
     take: 20,
     orderBy: { fechaSolicitud: "desc" },
     include: {
@@ -84,8 +88,58 @@ export async function connectionReport() {
     recent,
   };
 }
+export async function financialReport(query = {}) {
+  const periodWhere = reportDateWhere(query, "fechaPago");
 
-export async function financialReport() {
+  const payments = await prisma.pago.findMany({
+    where: periodWhere,
+    include: {
+      estado: true,
+      entrenador: {
+        include: {
+          usuario: {
+            select: {
+              nombre: true,
+              apellido: true,
+            },
+          },
+        },
+      },
+    },
+    orderBy: {
+      idPago: "desc",
+    },
+  });
+
+  const approved = payments.filter(
+    (payment) => payment.estado.nombre === "Aprobado",
+  );
+
+  const refunded = payments.filter(
+    (payment) => payment.estado.nombre === "Reembolsado",
+  );
+
+  return {
+    totals: {
+      approvedPayments: approved.length,
+      grossVolume: approved.reduce(
+        (sum, payment) => sum + payment.monto,
+        0,
+      ),
+      commissions: approved.reduce(
+        (sum, payment) => sum + payment.comision,
+        0,
+      ),
+      refundedPayments: refunded.length,
+      refundedVolume: refunded.reduce(
+        (sum, payment) => sum + payment.monto,
+        0,
+      ),
+    },
+    payments,
+  };
+}
+/*export async function financialReport() {
   const payments = await prisma.pago.findMany({
     include: {
       estado: true,
@@ -105,7 +159,6 @@ export async function financialReport() {
     totals: {
       approvedPayments: approved.length,
       grossVolume: approved.reduce((sum, payment) => sum + payment.monto, 0),
-      discounts: approved.reduce((sum, payment) => sum + payment.descuento, 0),
       commissions: approved.reduce((sum, payment) => sum + payment.comision, 0),
       refundedPayments: refunded.length,
       refundedVolume: refunded.reduce((sum, payment) => sum + payment.monto, 0),
@@ -136,6 +189,62 @@ export function trainerReport() {
       },
     },
     orderBy: { calificacionPromedio: "desc" },
+  });
+}*/
+export function trainerReport(query = {}) {
+  const paymentPeriod = reportDateWhere(query, "fechaPago");
+  const turnPeriod = reportDateWhere(query, "fechaInicio");
+  const requestPeriod = reportDateWhere(query, "fechaSolicitud");
+  const reviewPeriod = reportDateWhere(query, "fecha");
+
+  return prisma.entrenador.findMany({
+    include: {
+      estado: true,
+      usuario: {
+        select: {
+          idUsuario: true,
+          nombre: true,
+          apellido: true,
+          email: true,
+        },
+      },
+      especialidades: {
+        include: {
+          especialidad: true,
+        },
+      },
+      _count: {
+        select: {
+          solicitudes: {
+            where: requestPeriod,
+          },
+          turnos: {
+            where: turnPeriod,
+          },
+          pagos: {
+            where: paymentPeriod,
+          },
+          calificaciones: {
+            where: reviewPeriod,
+          },
+        },
+      },
+      pagos: {
+        where: {
+          estado: {
+            nombre: "Aprobado",
+          },
+          ...paymentPeriod,
+        },
+        select: {
+          monto: true,
+          comision: true,
+        },
+      },
+    },
+    orderBy: {
+      calificacionPromedio: "desc",
+    },
   });
 }
 

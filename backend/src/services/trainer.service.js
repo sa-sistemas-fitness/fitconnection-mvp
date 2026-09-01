@@ -6,6 +6,7 @@ import {
   requiredString,
 } from "../utils/request.js";
 import { audit } from "./audit.service.js";
+import { assertTrainerAllowedForUser, hasValidMinorCertification, userIsMinor, validMinorCertificationFilter } from "./minor-protection.service.js";
 
 const trainerInclude = {
   estado: true,
@@ -43,7 +44,7 @@ function trainerData(body) {
     experiencia: requiredNumber(body.experiencia, "experiencia", { min: 0 }),
     tarifaBase: requiredNumber(body.tarifaBase, "tarifaBase", { min: 0 }),
     modalidad: requiredString(body.modalidad, "modalidad"),
-    trabajaConMenores: Boolean(body.trabajaConMenores),
+    trabajaConMenores: false,
   };
 }
 
@@ -61,7 +62,7 @@ async function specialtyConnections(ids) {
   return uniqueIds.map((idEspecialidad) => ({ idEspecialidad }));
 }
 
-export async function listApprovedTrainers(query) {
+export async function listApprovedTrainers(query, auth) {
   const filters = {
     estado: { nombre: "Aprobado" },
     usuario: { estadoCuenta: { nombre: "Activo" } },
@@ -76,12 +77,17 @@ export async function listApprovedTrainers(query) {
     };
   }
   if (query.modality) filters.modalidad = String(query.modality);
+  if (await userIsMinor(auth.userId)) Object.assign(filters, validMinorCertificationFilter());
 
-  return prisma.entrenador.findMany({
+  const trainers = await prisma.entrenador.findMany({
     where: filters,
     include: trainerInclude,
     orderBy: [{ calificacionPromedio: "desc" }, { experiencia: "desc" }],
   });
+  return trainers.map((trainer) => ({
+    ...trainer,
+    trabajaConMenores: hasValidMinorCertification(trainer),
+  }));
 }
 
 export async function getTrainer(id, auth) {
@@ -95,7 +101,10 @@ export async function getTrainer(id, auth) {
     auth.roles.includes("Administrador") ||
     trainer.idUsuario === auth.userId;
   if (!canInspect) throw new ApiError(404, "Entrenador no encontrado.");
-  return trainer;
+  if (!auth.roles.includes("Administrador") && trainer.idUsuario !== auth.userId) {
+    await assertTrainerAllowedForUser(auth.userId, trainer);
+  }
+  return { ...trainer, trabajaConMenores: hasValidMinorCertification(trainer) };
 }
 
 export async function getMyTrainer(userId) {
@@ -104,7 +113,9 @@ export async function getMyTrainer(userId) {
     include: trainerInclude,
   });
   if (!trainer) throw new ApiError(404, "Todavía no tenés una postulación.");
-  if (trainer.estado.nombre !== "Rechazado") return trainer;
+  if (trainer.estado.nombre !== "Rechazado") {
+    return { ...trainer, trabajaConMenores: hasValidMinorCertification(trainer) };
+  }
 
   const rejectionAudit = await prisma.auditoria.findFirst({
     where: {
@@ -191,9 +202,6 @@ export async function updateMyTrainer(userId, body) {
   }
   if (body.modalidad !== undefined) {
     data.modalidad = requiredString(body.modalidad, "modalidad");
-  }
-  if (body.trabajaConMenores !== undefined) {
-    data.trabajaConMenores = Boolean(body.trabajaConMenores);
   }
   if (body.specialtyIds) {
     const connections = await specialtyConnections(body.specialtyIds);

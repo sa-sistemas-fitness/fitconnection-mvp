@@ -208,7 +208,7 @@ export function AdminPaymentsPage() {
                     "Turno",
                     "Fecha",
                     "Bruto",
-                    "Descuento",
+                    "% Comisión",
                     "Comisión",
                     "Neto",
                     "Método",
@@ -240,7 +240,7 @@ export function AdminPaymentsPage() {
                       {payment.fechaPago ? fullDate(payment.fechaPago) : "—"}
                     </td>
                     <td className="px-4 py-5">{money(payment.monto)}</td>
-                    <td className="px-4 py-5">{money(payment.descuento)}</td>
+                    <td className="px-4 py-5">{payment.porcentajeComisionAplicado}%</td>
                     <td className="px-4 py-5">{money(payment.comision)}</td>
                     <td className="px-4 py-5 font-bold text-emerald-300">
                       {money(payment.monto - payment.comision)}
@@ -326,7 +326,7 @@ export function AdminPaymentsPage() {
                 `${fullDate(selected.turno.fechaInicio)} · ${selected.turno.horaInicio}–${selected.turno.horaFin}`,
               ],
               ["Método", selected.metodoPago],
-              ["Descuento", money(selected.descuento)],
+              ["Porcentaje de comisión", `${selected.porcentajeComisionAplicado}%`],
               ["Comisión", money(selected.comision)],
               ["Neto entrenador", money(selected.monto - selected.comision)],
             ].map(([label, value]) => (

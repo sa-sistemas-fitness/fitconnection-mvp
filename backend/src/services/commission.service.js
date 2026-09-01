@@ -9,6 +9,18 @@ export function commissionRateForAverage(average, reviewCount) {
   return 25;
 }
 
+export function calculateCommission(grossAmount, commissionRate) {
+  const gross = Number(grossAmount);
+  const rate = Number(commissionRate);
+  const commission = Number(((gross * rate) / 100).toFixed(2));
+  return {
+    importeBruto: gross,
+    porcentajeComision: rate,
+    comision: commission,
+    importeNetoEntrenador: Number((gross - commission).toFixed(2)),
+  };
+}
+
 export async function recalculateTrainerRating(trainerId, tx = prisma) {
   const aggregate = await tx.calificacion.aggregate({
     where: {

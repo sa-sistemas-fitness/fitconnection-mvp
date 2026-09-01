@@ -137,6 +137,7 @@ async function seedUsers() {
       apellido: "FitConnection",
       email: "admin@fitconnection.com",
       contrasena: adminPassword,
+      fechaNacimiento: new Date("1985-01-15T00:00:00.000Z"),
       ...dniFields("10000001"),
       idEstadoCuenta: activo.idEstadoCuenta,
       roles: { create: { idRol: roleId.Administrador } },
@@ -149,6 +150,7 @@ async function seedUsers() {
       apellido: "Gómez",
       email: "cliente@fitconnection.com",
       contrasena: clientPassword,
+      fechaNacimiento: new Date("1998-05-20T00:00:00.000Z"),
       ...dniFields("10000002"),
       idEstadoCuenta: activo.idEstadoCuenta,
       roles: { create: { idRol: roleId.Cliente } },
@@ -170,6 +172,7 @@ async function seedUsers() {
       apellido: "Fernández",
       email: "entrenador@fitconnection.com",
       contrasena: trainerPassword,
+      fechaNacimiento: new Date("1992-09-12T00:00:00.000Z"),
       ...dniFields("10000003"),
       idEstadoCuenta: activo.idEstadoCuenta,
       roles: {
@@ -200,11 +203,18 @@ async function seedUsers() {
             create: {
               idEstadoCertificacion: validado.idEstadoCertificacion,
               titulo: "Entrenadora Nacional de Fuerza",
+              habilitaMenores: true,
               entidadEmisora: "Instituto Argentino de Entrenamiento",
               fechaEmision: new Date("2018-03-15T00:00:00.000Z"),
               comentarioAdmin: "Certificación validada en el seed inicial.",
               fechaRevision: new Date(),
             },
+          },
+          disponibilidades: {
+            create: [
+              { diaSemana: 1, horaInicio: "09:00", horaFin: "12:00", modalidad: "Híbrida" },
+              { diaSemana: 3, horaInicio: "18:00", horaFin: "21:00", modalidad: "Híbrida" },
+            ],
           },
         },
       },
@@ -282,6 +292,7 @@ async function seedUsers() {
         apellido: item.apellido,
         email: item.email,
         contrasena: trainerPassword,
+        fechaNacimiento: new Date(`199${index}-04-10T00:00:00.000Z`),
         ...dniFields(`1000000${index + 4}`),
         idEstadoCuenta: activo.idEstadoCuenta,
         roles: {
@@ -301,7 +312,7 @@ async function seedUsers() {
             experiencia: item.experience,
             tarifaBase: item.rate,
             modalidad: item.modality,
-            trabajaConMenores: true,
+            trabajaConMenores: false,
             calificacionPromedio: item.rating,
             porcentajeComision: 8,
             idEstadoEntrenador: aprobado.idEstadoEntrenador,
@@ -317,6 +328,12 @@ async function seedUsers() {
                 comentarioAdmin: "Certificación verificada.",
                 fechaRevision: new Date(),
               },
+            },
+            disponibilidades: {
+              create: [
+                { diaSemana: 2, horaInicio: "09:00", horaFin: "13:00", modalidad: item.modality },
+                { diaSemana: 4, horaInicio: "16:00", horaFin: "20:00", modalidad: item.modality },
+              ],
             },
           },
         },
@@ -401,8 +418,8 @@ async function seedUsers() {
       idEntrenador: primaryTrainer.entrenador.idEntrenador,
       idEstadoPago: approvedPayment.idEstadoPago,
       monto: 22000,
-      descuento: 0,
       comision: 1760,
+      porcentajeComisionAplicado: 8,
       metodoPago: "Tarjeta simulada",
       fechaPago: new Date(),
       calificacion: {

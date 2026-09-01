@@ -2,6 +2,7 @@ import { ApiError } from "../errors/api-error.js";
 import { prisma } from "../lib/prisma.js";
 import { requiredString } from "../utils/request.js";
 import { audit } from "./audit.service.js";
+import { assertTrainerAllowedForUser } from "./minor-protection.service.js";
 
 const include = {
   estado: true,
@@ -40,6 +41,7 @@ export async function createConnectionRequest(auth, body) {
   if (trainer.idUsuario === auth.userId) {
     throw new ApiError(400, "No podés enviarte una solicitud a vos mismo.");
   }
+  await assertTrainerAllowedForUser(auth.userId, trainer);
 
   const duplicate = await prisma.solicitudConexion.findFirst({
     where: {

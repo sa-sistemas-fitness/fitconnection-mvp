@@ -1,5 +1,4 @@
 import bcrypt from "bcrypt";
-import crypto from "node:crypto";
 import jwt from "jsonwebtoken";
 
 import { env } from "../config/env.js";
@@ -9,6 +8,9 @@ import { toPublicUser, userInclude } from "../utils/user-response.js";
 import { audit } from "./audit.service.js";
 import { sendEmail } from "./email.service.js";
 import { getDniIdentity } from "../utils/dni.js";
+import { parseDateOfBirth } from "../utils/age.js";
+import { validPersonName } from "../utils/person-name.js";
+import { createResetToken, hashResetToken, resetTokenIsUsable } from "../utils/password-reset-token.js";
 
 function normalizeEmail(email) {
   return String(email ?? "").trim().toLowerCase();
@@ -22,13 +24,13 @@ function createToken(userId) {
 }
 
 export async function registerUser(body, ip) {
-  const nombre = String(body.nombre ?? "").trim();
-  const apellido = String(body.apellido ?? "").trim();
+  const nombre = validPersonName(body.nombre, "nombre");
+  const apellido = validPersonName(body.apellido, "apellido");
   const email = normalizeEmail(body.email);
   const password = String(body.password ?? "");
   const dni = getDniIdentity(body.dni);
 
-  if (!nombre || !apellido || !email || !password) {
+  if (!email || !password) {
     throw new ApiError(
       400,
       "Nombre, apellido, email, DNI y contraseña son obligatorios.",
@@ -40,12 +42,7 @@ export async function registerUser(body, ip) {
   if (password.length < 6) {
     throw new ApiError(400, "La contraseña debe tener al menos 6 caracteres.");
   }
-  const birthDate = body.fechaNacimiento
-    ? new Date(body.fechaNacimiento)
-    : null;
-  if (birthDate && Number.isNaN(birthDate.getTime())) {
-    throw new ApiError(400, "fechaNacimiento no es válida.");
-  }
+  const birthDate = parseDateOfBirth(body.fechaNacimiento);
   if (await prisma.usuario.findUnique({ where: { email } })) {
     throw new ApiError(409, "El email ya está registrado.");
   }
@@ -165,8 +162,7 @@ export async function forgotPassword(body) {
   const user = await prisma.usuario.findUnique({ where: { email } });
 
   if (user) {
-    const rawToken = crypto.randomBytes(32).toString("hex");
-    const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
+    const { rawToken, tokenHash, expiresAt } = createResetToken();
     await prisma.tokenRecuperacion.updateMany({
       where: { idUsuario: user.idUsuario, usado: false },
       data: { usado: true },
@@ -175,7 +171,7 @@ export async function forgotPassword(body) {
       data: {
         idUsuario: user.idUsuario,
         token: tokenHash,
-        fechaExpiracion: new Date(Date.now() + 60 * 60 * 1000),
+        fechaExpiracion: expiresAt,
       },
     });
     const recoveryLink = `${env.frontendUrl.replace(/\/+$/, "")}/restablecer-contrasena?token=${rawToken}`;
@@ -207,27 +203,33 @@ export async function resetPassword(body, ip) {
     throw new ApiError(400, "Token y contraseña de al menos 6 caracteres requeridos.");
   }
 
-  const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
-  const recovery = await prisma.tokenRecuperacion.findUnique({
-    where: { token: tokenHash },
-  });
-  if (!recovery || recovery.usado) {
-    throw new ApiError(400, "El token es inválido.");
-  }
-  if (recovery.fechaExpiracion.getTime() < Date.now()) {
-    throw new ApiError(400, "El token expiró.");
-  }
-
-  await prisma.$transaction([
-    prisma.usuario.update({
-      where: { idUsuario: recovery.idUsuario },
-      data: { contrasena: await bcrypt.hash(password, 12) },
-    }),
-    prisma.tokenRecuperacion.update({
-      where: { idToken: recovery.idToken },
+  const tokenHash = hashResetToken(rawToken);
+  const passwordHash = await bcrypt.hash(password, 12);
+  const recovery = await prisma.$transaction(async (tx) => {
+    const token = await tx.tokenRecuperacion.findUnique({ where: { token: tokenHash } });
+    if (!token || token.usado) throw new ApiError(400, "El token es inválido.");
+    if (!resetTokenIsUsable(token)) {
+      throw new ApiError(400, "El token expiró.");
+    }
+    const consumed = await tx.tokenRecuperacion.updateMany({
+      where: {
+        idToken: token.idToken,
+        usado: false,
+        fechaExpiracion: { gte: new Date() },
+      },
       data: { usado: true },
-    }),
-  ]);
+    });
+    if (consumed.count !== 1) throw new ApiError(400, "El token es inválido o expiró.");
+    await tx.usuario.update({
+      where: { idUsuario: token.idUsuario },
+      data: { contrasena: passwordHash },
+    });
+    await tx.tokenRecuperacion.updateMany({
+      where: { idUsuario: token.idUsuario, usado: false },
+      data: { usado: true },
+    });
+    return token;
+  });
   await audit({
     userId: recovery.idUsuario,
     action: "RESTABLECER_CONTRASENA",

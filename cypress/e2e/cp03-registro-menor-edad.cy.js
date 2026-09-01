@@ -14,9 +14,7 @@ describe("CP-03: Registro de menor de edad — flag de protección", () => {
     const year = birthDate.getFullYear();
     const month = String(birthDate.getMonth() + 1).padStart(2, "0");
     const day = String(birthDate.getDate()).padStart(2, "0");
-    // Revisamos qué formato espera el backend mirando el form: name="ubicacion" etc
-    // El form de RegisterPage no tiene campo de fecha explícito con type="date"
-    // Según el documento CP-03: la fecha se ingresa. Verificamos la API directamente.
+    // El formulario y la API reciben únicamente la fecha; la edad se deriva en backend.
 
     const minorUser = {
       nombre: "Ana",
@@ -40,12 +38,7 @@ describe("CP-03: Registro de menor de edad — flag de protección", () => {
     cy.get('input[name="password"]').type(minorUser.password);
     cy.get('input[name="ubicacion"]').type(minorUser.ubicacion);
 
-    // Si hay campo de fecha de nacimiento, lo completamos
-    cy.get("body").then(($body) => {
-      if ($body.find('input[name="fechaNacimiento"]').length > 0) {
-        cy.get('input[name="fechaNacimiento"]').type(minorUser.fechaNacimiento);
-      }
-    });
+    cy.get('input[name="fechaNacimiento"]').type(minorUser.fechaNacimiento);
 
     cy.contains("button", "Crear cuenta").click();
 
@@ -72,10 +65,9 @@ describe("CP-03: Registro de menor de edad — flag de protección", () => {
           const user = response.body.user;
           // Verificar que el usuario fue creado
           expect(user.email).to.eq(minorUser.email);
-          // Si el backend incluye fechaNacimiento en la respuesta, verificar es_menor
-          if (user.fechaNacimiento || user.cliente?.fechaNacimiento) {
-            cy.task("log", `Usuario registrado: ${user.nombre} - menor detectado por sistema`);
-          }
+          expect(user.fechaNacimiento).to.contain(`${year}-${month}-${day}`);
+          expect(user.isMinor).to.eq(true);
+          expect(user.edad).to.eq(16);
         });
       });
     });

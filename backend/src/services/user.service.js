@@ -2,6 +2,26 @@ import { ApiError } from "../errors/api-error.js";
 import { prisma } from "../lib/prisma.js";
 import { toPublicUser, userInclude } from "../utils/user-response.js";
 import { audit } from "./audit.service.js";
+import { validPersonName } from "../utils/person-name.js";
+
+export async function updateOwnProfile(userId, body, ip) {
+  const user = await prisma.usuario.update({
+    where: { idUsuario: userId },
+    data: {
+      nombre: validPersonName(body.nombre, "nombre"),
+      apellido: validPersonName(body.apellido, "apellido"),
+    },
+    include: userInclude,
+  });
+  await audit({
+    userId,
+    action: "ACTUALIZAR_PERFIL",
+    table: "usuario",
+    ip,
+    detail: { fields: ["nombre", "apellido"] },
+  });
+  return toPublicUser(user);
+}
 
 export async function listUsers() {
   const users = await prisma.usuario.findMany({

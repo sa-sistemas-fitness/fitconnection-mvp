@@ -207,6 +207,7 @@ export function AdminCertificationsPage() {
                   <strong className="block truncate">
                     {certification.archivo || "No informado"}
                   </strong>
+                  {certification.habilitaMenores && <p className="mt-1 text-xs font-bold text-blue-300">Solicita habilitación para trabajar con menores</p>}
                 </div>
               </div>
 

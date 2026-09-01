@@ -32,7 +32,6 @@ describe("CP-04: Pago exitoso — turno reservado", () => {
           idPago: 999,
           idTurno: 1,
           monto: 5000,
-          descuento: 0,
           metodoPago: "Tarjeta simulada",
           estado: { nombre: "Aprobado" },
         },

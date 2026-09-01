@@ -13,7 +13,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { api } from "../api/client.js";
 import { ErrorState, LoadingState } from "../components/RequestState.jsx";
 import { Button, Card, EmptyState, Select, StatusBadge } from "../components/ui.jsx";
-import { useAuth } from "../context/AuthContext.jsx";
 import { fullDate } from "../lib/format.js";
 
 const days = [
@@ -43,7 +42,7 @@ const emptyForm = {
 };
 
 function overlaps(slot, turn) {
-  const turnDay = dayByIndex[new Date(turn.fechaInicio).getDay()];
+  const turnDay = dayByIndex[new Date(turn.fechaInicio).getUTCDay()];
   return (
     slot.dia === turnDay &&
     slot.horaInicio < turn.horaFin &&
@@ -52,15 +51,7 @@ function overlaps(slot, turn) {
 }
 
 export function TrainerAvailabilityPage() {
-  const { user } = useAuth();
-  const storageKey = `fitconnection_trainer_availability_${user.idUsuario}`;
-  const [slots, setSlots] = useState(() => {
-    try {
-      return JSON.parse(localStorage.getItem(storageKey) ?? "[]");
-    } catch {
-      return [];
-    }
-  });
+  const [slots, setSlots] = useState([]);
   const [turns, setTurns] = useState([]);
   const [form, setForm] = useState(emptyForm);
   const [loading, setLoading] = useState(true);
@@ -71,12 +62,20 @@ export function TrainerAvailabilityPage() {
     setLoading(true);
     setError("");
     try {
-      const { data } = await api.get("/turns/received");
+      const [{ data }, availabilityResponse] = await Promise.all([
+        api.get("/turns/received"),
+        api.get("/trainers/me/availability"),
+      ]);
       setTurns(
         data.turns.filter((turn) =>
           ["Solicitado", "Reservado"].includes(turn.estado.nombre),
         ),
       );
+      setSlots(availabilityResponse.data.slots.map((slot) => ({
+        ...slot,
+        id: slot.idDisponibilidad,
+        dia: dayByIndex[slot.diaSemana],
+      })));
     } catch (requestError) {
       setError(
         requestError.response?.data?.message ??
@@ -91,12 +90,7 @@ export function TrainerAvailabilityPage() {
     loadTurns();
   }, [loadTurns]);
 
-  const saveSlots = (nextSlots) => {
-    setSlots(nextSlots);
-    localStorage.setItem(storageKey, JSON.stringify(nextSlots));
-  };
-
-  const addSlot = (event) => {
+  const addSlot = async (event) => {
     event.preventDefault();
     if (form.horaFin <= form.horaInicio) {
       setFeedback({
@@ -119,12 +113,29 @@ export function TrainerAvailabilityPage() {
       });
       return;
     }
-    saveSlots([...slots, { ...form, id: crypto.randomUUID() }]);
-    setForm(emptyForm);
-    setFeedback({
-      type: "success",
-      message: "Bloque guardado localmente en este navegador.",
-    });
+    try {
+      const { data } = await api.post("/trainers/me/availability", {
+        diaSemana: dayByIndex.indexOf(form.dia),
+        horaInicio: form.horaInicio,
+        horaFin: form.horaFin,
+        modalidad: form.modalidad,
+        observaciones: form.observaciones,
+      });
+      setSlots([...slots, { ...data.slot, id: data.slot.idDisponibilidad, dia: form.dia }]);
+      setForm(emptyForm);
+      setFeedback({ type: "success", message: "Disponibilidad guardada en el sistema." });
+    } catch (requestError) {
+      setFeedback({ type: "error", message: requestError.response?.data?.message ?? "No se pudo guardar la disponibilidad." });
+    }
+  };
+
+  const removeSlot = async (slot) => {
+    try {
+      await api.delete(`/trainers/me/availability/${slot.idDisponibilidad}`);
+      setSlots(slots.filter((item) => item.idDisponibilidad !== slot.idDisponibilidad));
+    } catch (requestError) {
+      setFeedback({ type: "error", message: requestError.response?.data?.message ?? "No se pudo eliminar la disponibilidad." });
+    }
   };
 
   const sortedSlots = useMemo(
@@ -301,11 +312,7 @@ export function TrainerAvailabilityPage() {
                       </div>
                       <Button
                         aria-label="Eliminar disponibilidad"
-                        onClick={() =>
-                          saveSlots(
-                            slots.filter((item) => item.id !== slot.id),
-                          )
-                        }
+                        onClick={() => removeSlot(slot)}
                         size="sm"
                         variant="danger"
                       >

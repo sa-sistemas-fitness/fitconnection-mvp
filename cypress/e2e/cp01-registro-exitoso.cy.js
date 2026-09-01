@@ -11,6 +11,7 @@ describe("CP-01: Registro exitoso con datos válidos", () => {
     apellido: "García",
     email: `juan.garcia.${timestamp}@mail.com`,
     dni: `${30000000 + (timestamp % 9999999)}`,
+    fechaNacimiento: "1995-04-12",
     password: "Pwd1234!",
     ubicacion: "Buenos Aires",
   };
@@ -23,6 +24,7 @@ describe("CP-01: Registro exitoso con datos válidos", () => {
     cy.get('input[name="apellido"]').type(user.apellido);
     cy.get('input[name="email"]').type(user.email);
     cy.get('input[name="dni"]').type(user.dni);
+    cy.get('input[name="fechaNacimiento"]').type(user.fechaNacimiento);
     cy.get('input[name="password"]').type(user.password);
     cy.get('input[name="ubicacion"]').type(user.ubicacion);
 

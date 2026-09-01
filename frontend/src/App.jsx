@@ -31,6 +31,7 @@ import { TrainerReportsPage } from "./pages/TrainerReportsPage.jsx";
 import { TrainerRequestsPage } from "./pages/TrainerRequestsPage.jsx";
 import { TrainerTurnsPage } from "./pages/TrainerTurnsPage.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
+import { AccountProfilePage } from "./pages/AccountProfilePage.jsx";
 
 function DashboardHome() {
   const { user } = useAuth();
@@ -201,7 +202,7 @@ export function App() {
             path="/portal-entrenador/reportes"
           />
           <Route element={<ChatPage />} path="/mensajes" />
-          <Route element={<Navigate replace to="/panel" />} path="/cuenta" />
+          <Route element={<AccountProfilePage />} path="/cuenta" />
         </Route>
         <Route element={<Navigate replace to="/" />} path="*" />
       </Routes>

@@ -28,3 +28,21 @@ No se modifican reglas de negocio para completar estas validaciones.
   comportamiento fuera del alcance de esta reconstrucción.
 - `dist`, `node_modules` y `backend/prisma/dev.db` permanecen únicamente como
   artefactos locales ignorados.
+# Cobertura de reglas finales del MVP
+
+Además de los casos E2E de este documento, `backend/test/mvp-rules.test.js`
+verifica edad de menores y adultos, protección de menores, validación de nombre,
+token de recuperación vigente/expirado/usado, comisión, intervalos superpuestos,
+disponibilidad y liberación de horarios cancelados.
+
+Los escenarios de integración manual obligatorios son:
+
+1. Un menor no recibe entrenadores sin autorización en marketplace, detalle ni
+   creación de solicitud.
+2. Aprobar una certificación para menores habilita al entrenador; rechazarla o
+   no tener otra vigente lo mantiene no autorizado.
+3. Dos solicitudes concurrentes para el mismo entrenador y horario no pueden
+   quedar activas simultáneamente.
+4. Cancelar un turno permite volver a solicitar ese horario.
+5. El entrenador visualiza bruto, porcentaje aplicado, comisión y neto.
+6. Ninguna pantalla ni payload de pago ofrece descuentos.

@@ -1,6 +1,12 @@
 import * as service from "../services/user.service.js";
 import { parseId } from "../utils/request.js";
 
+export async function updateMe(request, response) {
+  response.json({
+    user: await service.updateOwnProfile(request.auth.userId, request.body, request.ip),
+  });
+}
+
 export async function list(_request, response) {
   response.json({ users: await service.listUsers() });
 }

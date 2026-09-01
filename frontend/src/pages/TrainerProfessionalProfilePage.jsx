@@ -42,7 +42,6 @@ export function TrainerProfessionalProfilePage() {
         experiencia: loadedTrainer.experiencia,
         tarifaBase: loadedTrainer.tarifaBase,
         modalidad: loadedTrainer.modalidad,
-        trabajaConMenores: loadedTrainer.trabajaConMenores,
         fotoPerfil: loadedTrainer.usuario.fotoPerfil ?? "",
         specialtyIds: loadedTrainer.especialidades.map(({ idEspecialidad }) =>
           String(idEspecialidad),
@@ -242,19 +241,12 @@ export function TrainerProfessionalProfilePage() {
               <option>Presencial</option>
               <option>Híbrida</option>
             </Select>
-            <Select
-              label="Trabaja con menores"
-              onChange={(event) =>
-                setForm({
-                  ...form,
-                  trabajaConMenores: event.target.value === "true",
-                })
-              }
-              value={String(form.trabajaConMenores)}
-            >
-              <option value="false">No</option>
-              <option value="true">Sí</option>
-            </Select>
+            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
+              <p className="text-sm text-slate-500">Trabajo con menores</p>
+              <strong className={trainer.trabajaConMenores ? "text-emerald-300" : "text-slate-300"}>
+                {trainer.trabajaConMenores ? "Autorizado por Administración" : "No autorizado"}
+              </strong>
+            </div>
 
             <fieldset className="md:col-span-2">
               <legend className="text-sm font-semibold text-slate-300">

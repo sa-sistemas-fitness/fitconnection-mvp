@@ -1,3 +1,5 @@
+import { calculateAge, isMinor } from "./age.js";
+
 export function toPublicUser(user) {
   return {
     idUsuario: user.idUsuario,
@@ -6,6 +8,9 @@ export function toPublicUser(user) {
     email: user.email,
     dniMascara: user.dniMascara,
     dniVerificado: user.dniVerificado,
+    fechaNacimiento: user.fechaNacimiento,
+    edad: calculateAge(user.fechaNacimiento),
+    isMinor: isMinor(user.fechaNacimiento),
     fechaRegistro: user.fechaRegistro,
     ultimoLogin: user.ultimoLogin,
     estadoCuenta: user.estadoCuenta.nombre,

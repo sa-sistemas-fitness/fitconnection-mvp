@@ -26,6 +26,7 @@ import {
   ChartCard,
   DataTable,
   MetricCard,
+  Select,
   StatusBadge,
 } from "../components/ui.jsx";
 import { money } from "../lib/format.js";
@@ -36,6 +37,45 @@ const tooltipStyle = {
   border: "1px solid #29304a",
   borderRadius: 14,
 };
+
+function formatDateParameter(date) {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
+}
+
+function reportPeriodParams(period) {
+  if (period === "all") return {};
+
+  const today = new Date();
+  const from = new Date(today);
+  const to = new Date(today);
+
+  if (period === "current-week") {
+    const daysFromMonday = (today.getDay() + 6) % 7;
+    from.setDate(today.getDate() - daysFromMonday);
+  }
+
+  if (period === "last-7-days") {
+    from.setDate(today.getDate() - 6);
+  }
+
+  if (period === "current-month") {
+    from.setDate(1);
+  }
+
+  if (period === "previous-month") {
+    from.setFullYear(today.getFullYear(), today.getMonth() - 1, 1);
+    to.setFullYear(today.getFullYear(), today.getMonth(), 0);
+  }
+
+  return {
+    desde: formatDateParameter(from),
+    hasta: formatDateParameter(to),
+  };
+}
 
 function monthlyFinancial(payments, months = 6) {
   const now = new Date();
@@ -64,6 +104,7 @@ function monthlyFinancial(payments, months = 6) {
 
 export function AdminReportsPage() {
   const [activeTab, setActiveTab] = useState("connections");
+  const [period, setPeriod] = useState("all");
   const [data, setData] = useState({
     overview: null,
     connections: null,
@@ -77,11 +118,12 @@ export function AdminReportsPage() {
     setLoading(true);
     setError("");
     try {
+      const params=reportPeriodParams(period);
       const [overview, connections, financial, trainers] = await Promise.all([
-        api.get("/reports/admin/overview"),
-        api.get("/reports/connections"),
-        api.get("/reports/financial"),
-        api.get("/reports/trainers"),
+         api.get("/reports/admin/overview"),
+         api.get("/reports/connections", { params }),
+         api.get("/reports/financial", { params }),
+         api.get("/reports/trainers", { params }),
       ]);
       setData({
         overview: overview.data,
@@ -97,7 +139,7 @@ export function AdminReportsPage() {
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [period]);
 
   useEffect(() => {
     load();
@@ -183,13 +225,33 @@ export function AdminReportsPage() {
 
   return (
     <div className="page-container py-10">
-      <div>
-        <p className="eyebrow">ADMIN-07</p>
-        <h1 className="mt-2 text-4xl font-extrabold">Reportes Admin</h1>
-        <p className="mt-2 text-slate-400">
-          Conexiones, finanzas y rendimiento de entrenadores.
-        </p>
-      </div>
+     <div className="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+  <div>
+    <p className="eyebrow">ADMIN-07</p>
+
+    <h1 className="mt-2 text-4xl font-extrabold">
+      Reportes Admin
+    </h1>
+
+    <p className="mt-2 text-slate-400">
+      Conexiones, finanzas y rendimiento de entrenadores.
+    </p>
+  </div>
+
+  <div className="w-full md:w-64">
+    <Select
+      label="Período del reporte"
+      onChange={(event) => setPeriod(event.target.value)}
+      value={period}
+    >
+      <option value="all">Todo el historial</option>
+      <option value="current-week">Esta semana</option>
+      <option value="last-7-days">Últimos 7 días</option>
+      <option value="current-month">Este mes</option>
+      <option value="previous-month">Mes anterior</option>
+    </Select>
+  </div>
+</div>
 
       <div className="mt-7 flex flex-wrap gap-2">
         {[

@@ -31,6 +31,15 @@ function addOneHour(time) {
   return `${String((hour + 1) % 24).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
 }
 
+const dayNames = ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"];
+
+function nextDateForWeekday(day) {
+  const date = new Date();
+  date.setUTCHours(0, 0, 0, 0);
+  date.setUTCDate(date.getUTCDate() + ((day - date.getUTCDay() + 7) % 7));
+  return date.toISOString().slice(0, 10);
+}
+
 export function TrainerProfilePage() {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -39,6 +48,7 @@ export function TrainerProfilePage() {
   const [connections, setConnections] = useState([]);
   const [turns, setTurns] = useState([]);
   const [chats, setChats] = useState([]);
+  const [availability, setAvailability] = useState({ slots: [], occupiedTurns: [] });
   const [tab, setTab] = useState("about");
   const [connectionModal, setConnectionModal] = useState(false);
   const [turnModal, setTurnModal] = useState(false);
@@ -61,13 +71,14 @@ export function TrainerProfilePage() {
     setLoading(true);
     setError("");
     try {
-      const [trainerResponse, reviewResponse, connectionResponse, turnResponse, chatResponse] =
+      const [trainerResponse, reviewResponse, connectionResponse, turnResponse, chatResponse, availabilityResponse] =
         await Promise.all([
           api.get(`/trainers/${id}`),
           api.get(`/reviews/trainer/${id}`),
           api.get("/connection-requests/my"),
           api.get("/turns/my"),
           api.get("/chats"),
+          api.get(`/trainers/${id}/availability`),
         ]);
       const loadedTrainer = trainerResponse.data.trainer;
       setTrainer(loadedTrainer);
@@ -75,6 +86,7 @@ export function TrainerProfilePage() {
       setConnections(connectionResponse.data.connectionRequests);
       setTurns(turnResponse.data.turns);
       setChats(chatResponse.data.chats);
+      setAvailability(availabilityResponse.data);
       setReservation((current) => ({
         ...current,
         modality: current.modality || loadedTrainer.modalidad,
@@ -118,6 +130,27 @@ export function TrainerProfilePage() {
   const trainerTurns = turns.filter(
     (turn) => String(turn.idEntrenador) === String(id),
   );
+
+  const selectSlot = (slot) => {
+    const date = nextDateForWeekday(slot.diaSemana);
+    setReservation({
+      date,
+      startTime: slot.horaInicio,
+      endTime: slot.horaFin,
+      modality: slot.modalidad,
+      observations: "",
+    });
+    setFeedback({ type: "", message: "" });
+    setTurnModal(true);
+  };
+
+  const slotIsOccupied = (slot) => {
+    const date = nextDateForWeekday(slot.diaSemana);
+    return availability.occupiedTurns.some((turn) =>
+      String(turn.fechaInicio).slice(0, 10) === date &&
+      turn.horaInicio < slot.horaFin && turn.horaFin > slot.horaInicio
+    );
+  };
 
   const sendConnection = async () => {
     setSubmitting(true);
@@ -250,6 +283,9 @@ export function TrainerProfilePage() {
               <p className="mt-2 text-lg text-blue-300">
                 {specialties.join(" · ")}
               </p>
+              <p className={`mt-3 text-sm font-bold ${trainer.trabajaConMenores ? "text-emerald-300" : "text-slate-500"}`}>
+                Trabajo con menores: {trainer.trabajaConMenores ? "Autorizado" : "No autorizado"}
+              </p>
               <div className="mt-4 flex flex-wrap gap-5 text-sm text-slate-400">
                 <span className="flex items-center gap-2">
                   <Star className="size-4 fill-amber-400 text-amber-400" />
@@ -340,6 +376,7 @@ export function TrainerProfilePage() {
                             <p className="text-sm text-slate-500">
                               {certification.entidadEmisora}
                             </p>
+                            {certification.habilitaMenores && <p className="text-xs font-bold text-emerald-300">Habilita trabajo con menores</p>}
                           </div>
                         </div>
                       ))
@@ -466,6 +503,27 @@ export function TrainerProfilePage() {
             )}
           </div>
 
+          <div className="mt-5 rounded-2xl border border-white/[0.07] bg-[#10131f] p-5">
+            <p className="text-xs font-extrabold uppercase tracking-[0.18em] text-slate-500">Disponibilidad</p>
+            <div className="mt-3 space-y-2">
+              {availability.slots.length ? availability.slots.map((slot) => {
+                const occupied = slotIsOccupied(slot);
+                return (
+                  <button
+                    className="flex w-full items-center justify-between rounded-xl border border-white/10 px-3 py-3 text-left text-sm disabled:cursor-not-allowed disabled:opacity-45"
+                    disabled={occupied || !acceptedConnection}
+                    key={slot.idDisponibilidad}
+                    onClick={() => selectSlot(slot)}
+                    type="button"
+                  >
+                    <span><strong>{dayNames[slot.diaSemana]}</strong><br /><span className="text-slate-500">{slot.horaInicio}–{slot.horaFin} · {slot.modalidad}</span></span>
+                    <StatusBadge tone={occupied ? "slate" : "green"}>{occupied ? "Ocupado" : "Disponible"}</StatusBadge>
+                  </button>
+                );
+              }) : <p className="text-sm text-slate-500">El entrenador todavía no publicó horarios.</p>}
+            </div>
+          </div>
+
           {!acceptedConnection && !pendingConnection && (
             <Button
               className="mt-6 w-full"
@@ -483,10 +541,8 @@ export function TrainerProfilePage() {
           {acceptedConnection && (
             <Button
               className="mt-6 w-full"
-              onClick={() => {
-                setFeedback({ type: "", message: "" });
-                setTurnModal(true);
-              }}
+              disabled={!availability.slots.some((slot) => !slotIsOccupied(slot))}
+              onClick={() => selectSlot(availability.slots.find((slot) => !slotIsOccupied(slot)))}
               size="lg"
             >
               <CalendarDays className="size-5" />
@@ -608,6 +664,7 @@ export function TrainerProfilePage() {
             </span>
             <input
               className="w-full rounded-2xl border border-white/10 bg-[#10131f] px-4 py-3.5 text-white outline-none focus:border-blue-500/70"
+              disabled
               min={new Date().toISOString().slice(0, 10)}
               onChange={(event) =>
                 setReservation({ ...reservation, date: event.target.value })
@@ -622,6 +679,7 @@ export function TrainerProfilePage() {
             </span>
             <input
               className="w-full rounded-2xl border border-white/10 bg-[#10131f] px-4 py-3.5 text-white outline-none focus:border-blue-500/70"
+              disabled
               onChange={(event) => {
                 const startTime = event.target.value;
                 setReservation({
@@ -640,6 +698,7 @@ export function TrainerProfilePage() {
             </span>
             <input
               className="w-full rounded-2xl border border-white/10 bg-[#10131f] px-4 py-3.5 text-white outline-none focus:border-blue-500/70"
+              disabled
               onChange={(event) =>
                 setReservation({
                   ...reservation,
@@ -652,6 +711,7 @@ export function TrainerProfilePage() {
           </label>
           <div className="sm:col-span-2">
             <Select
+              disabled
               label="Modalidad"
               onChange={(event) =>
                 setReservation({
