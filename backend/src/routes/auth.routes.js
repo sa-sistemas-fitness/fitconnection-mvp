@@ -11,3 +11,4 @@ authRouter.post("/login", asyncHandler(controller.login));
 authRouter.post("/forgot-password", asyncHandler(controller.forgotPassword));
 authRouter.post("/reset-password", asyncHandler(controller.resetPassword));
 authRouter.get("/me", authRequired, asyncHandler(controller.me));
+authRouter.post("/change-password", authRequired, asyncHandler(controller.changePassword));

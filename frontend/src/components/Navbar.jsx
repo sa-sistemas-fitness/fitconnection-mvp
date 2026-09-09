@@ -169,7 +169,7 @@ function UserDropdown({ user, signOut }) {
         <DropdownLink onClick={close} to="/cuenta">
           Mi perfil
         </DropdownLink>
-        <DropdownLink onClick={close} to="/recuperar-contrasena">
+        <DropdownLink onClick={close} to="/cambiar-contrasena">
           Cambiar contraseña
         </DropdownLink>
         <div className="my-2 h-px bg-white/10" />
@@ -380,7 +380,7 @@ export function Navbar() {
               <NavLink className="block rounded-2xl px-4 py-3 text-sm font-semibold text-slate-300" onClick={goAndClose} to="/cuenta">
                 Mi perfil
               </NavLink>
-              <NavLink className="block rounded-2xl px-4 py-3 text-sm font-semibold text-slate-300" onClick={goAndClose} to="/recuperar-contrasena">
+              <NavLink className="block rounded-2xl px-4 py-3 text-sm font-semibold text-slate-300" onClick={goAndClose} to="/cambiar-contrasena">
                 Cambiar contraseña
               </NavLink>
               <button

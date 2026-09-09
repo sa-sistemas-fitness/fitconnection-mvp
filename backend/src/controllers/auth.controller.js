@@ -19,3 +19,7 @@ export async function forgotPassword(request, response) {
 export async function resetPassword(request, response) {
   response.json(await authService.resetPassword(request.body, request.ip));
 }
+
+export async function changePassword(request, response) {
+  response.json(await authService.changePassword(request.auth.userId, request.body, request.ip));
+}
