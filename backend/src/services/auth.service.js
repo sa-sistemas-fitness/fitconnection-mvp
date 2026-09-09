@@ -238,3 +238,39 @@ export async function resetPassword(body, ip) {
   });
   return { message: "Contraseña actualizada correctamente." };
 }
+
+export async function changePassword(userId, body, ip) {
+  const currentPassword = String(body.currentPassword ?? "");
+  const newPassword = String(body.newPassword ?? "");
+
+  if (newPassword.length < 6) {
+    throw new ApiError(400, "La nueva contraseña debe tener al menos 6 caracteres.");
+  }
+
+  const user = await prisma.usuario.findUnique({
+    where: { idUsuario: userId },
+  });
+
+  if (!user) throw new ApiError(404, "Usuario no encontrado.");
+
+  const validPassword = await bcrypt.compare(currentPassword, user.contrasena);
+  if (!validPassword) {
+    throw new ApiError(400, "La contraseña actual es incorrecta.");
+  }
+
+  const passwordHash = await bcrypt.hash(newPassword, 12);
+
+  await prisma.usuario.update({
+    where: { idUsuario: userId },
+    data: { contrasena: passwordHash },
+  });
+
+  await audit({
+    userId: user.idUsuario,
+    action: "CAMBIO_CONTRASENA",
+    table: "usuario",
+    ip,
+  });
+
+  return { message: "Contraseña actualizada correctamente." };
+}

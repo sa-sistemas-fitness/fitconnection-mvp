@@ -32,6 +32,7 @@ import { TrainerRequestsPage } from "./pages/TrainerRequestsPage.jsx";
 import { TrainerTurnsPage } from "./pages/TrainerTurnsPage.jsx";
 import { useAuth } from "./context/AuthContext.jsx";
 import { AccountProfilePage } from "./pages/AccountProfilePage.jsx";
+import { ChangePasswordPage } from "./pages/ChangePasswordPage.jsx";
 
 function DashboardHome() {
   const { user } = useAuth();
@@ -203,6 +204,7 @@ export function App() {
           />
           <Route element={<ChatPage />} path="/mensajes" />
           <Route element={<AccountProfilePage />} path="/cuenta" />
+          <Route element={<ChangePasswordPage />} path="/cambiar-contrasena" />
         </Route>
         <Route element={<Navigate replace to="/" />} path="*" />
       </Routes>
