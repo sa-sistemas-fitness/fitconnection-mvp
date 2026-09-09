@@ -13,7 +13,7 @@
     "prisma:push": "npm run prisma:push --prefix backend",
     "prisma:seed": "npm run prisma:seed --prefix backend",
     "cypress:open": "cypress open",
-    "cypress:run": "cypress run",
+    "cypress:run": "cypress run --headless --browser chrome",
     "test:e2e": "cypress run"
   },
   "devDependencies": {
