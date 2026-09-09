@@ -1,6 +1,7 @@
 import {
   Bell,
   ChevronDown,
+  CircleHelp,
   LogOut,
   Menu,
   MessageSquare,
@@ -303,6 +304,20 @@ export function Navbar() {
               <span className="absolute right-1 top-1 grid size-4 place-items-center rounded-full bg-blue-500 text-[10px] font-bold text-white">1</span>
             </NavLink>
           )}
+          <NavLink
+            aria-label="Manual de usuario"
+            className={({ isActive }) =>
+              `relative rounded-xl p-2.5 transition ${
+                isActive
+                  ? "bg-blue-500/10 text-blue-300"
+                  : "text-slate-400 hover:bg-white/5 hover:text-white"
+              }`
+            }
+            title="Manual de usuario"
+            to="/manual"
+          >
+            <CircleHelp className="size-5" />
+          </NavLink>
           <button aria-label="Notificaciones" className="hidden rounded-xl p-2.5 text-slate-400 hover:bg-white/5 hover:text-white sm:inline-flex" type="button">
             <Bell className="size-5" />
           </button>
@@ -382,6 +397,9 @@ export function Navbar() {
               </NavLink>
               <NavLink className="block rounded-2xl px-4 py-3 text-sm font-semibold text-slate-300" onClick={goAndClose} to="/cambiar-contrasena">
                 Cambiar contraseña
+              </NavLink>
+              <NavLink className="flex items-center gap-2 rounded-2xl px-4 py-3 text-sm font-semibold text-slate-300" onClick={goAndClose} to="/manual">
+                <CircleHelp className="size-4" /> Manual de usuario
               </NavLink>
               <button
                 className="flex w-full items-center gap-2 rounded-2xl px-4 py-3 text-left text-sm font-bold text-rose-300 hover:bg-rose-500/10"
