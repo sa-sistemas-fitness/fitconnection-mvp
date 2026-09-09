@@ -91,7 +91,7 @@ export function RegisterPage() {
       <p className="eyebrow">Empezá como Cliente</p>
       <h2 className="mt-3 text-4xl font-extrabold">Creá tu cuenta</h2>
       <p className="mt-3 text-slate-400">Luego podrás postularte desde el Portal del Entrenador.</p>
-      <form className="mt-8 space-y-4" onSubmit={submit}>
+      <form className="mt-8 space-y-4" noValidate onSubmit={submit}>
         <div className="grid grid-cols-2 gap-4"><Input label="Nombre" name="nombre" onChange={update} value={form.nombre} /><Input label="Apellido" name="apellido" onChange={update} value={form.apellido} /></div>
         <Input label="Email" name="email" onChange={update} type="email" value={form.email} />
         <Input label="DNI" inputMode="numeric" name="dni" onChange={update} placeholder="Sin puntos ni guiones" value={form.dni} />

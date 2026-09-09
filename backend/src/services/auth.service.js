@@ -24,13 +24,13 @@ function createToken(userId) {
 }
 
 export async function registerUser(body, ip) {
-  const nombre = validPersonName(body.nombre, "nombre");
-  const apellido = validPersonName(body.apellido, "apellido");
-  const email = normalizeEmail(body.email);
-  const password = String(body.password ?? "");
-  const dni = getDniIdentity(body.dni);
+  const rawNombre = String(body?.nombre ?? "").trim();
+  const rawApellido = String(body?.apellido ?? "").trim();
+  const email = normalizeEmail(body?.email);
+  const rawDni = String(body?.dni ?? "").trim();
+  const password = String(body?.password ?? "");
 
-  if (!email || !password) {
+  if (!rawNombre || !rawApellido || !email || !rawDni || !password) {
     throw new ApiError(
       400,
       "Nombre, apellido, email, DNI y contraseña son obligatorios.",
@@ -39,13 +39,18 @@ export async function registerUser(body, ip) {
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     throw new ApiError(400, "El email no es válido.");
   }
-  if (password.length < 6) {
-    throw new ApiError(400, "La contraseña debe tener al menos 6 caracteres.");
-  }
-  const birthDate = parseDateOfBirth(body.fechaNacimiento);
   if (await prisma.usuario.findUnique({ where: { email } })) {
     throw new ApiError(409, "El email ya está registrado.");
   }
+  if (password.length < 6) {
+    throw new ApiError(400, "La contraseña debe tener al menos 6 caracteres.");
+  }
+
+  const nombre = validPersonName(rawNombre, "nombre");
+  const apellido = validPersonName(rawApellido, "apellido");
+  const dni = getDniIdentity(rawDni);
+  const birthDate = parseDateOfBirth(body?.fechaNacimiento);
+
   const blockedIdentity = await prisma.identidadBloqueada.findFirst({
     where: { dniHash: dni.hash, activa: true },
   });
