@@ -75,11 +75,6 @@ desea y gestione turnos, pagos y comunicación dentro de una misma plataforma.
 
 ## Stack tecnológico
 
-- Frontend: React, Vite, TailwindCSS, React Router, Axios, Lucide React y
-  Recharts.
-- Backend: Node.js, Express, Prisma, JWT, bcrypt, CORS, dotenv y Nodemailer.
-- Base local: SQLite.
-- Base producción: PostgreSQL.
 - Frontend: React 19, Vite 7, TailwindCSS 3.4, React Router 7, Axios, Lucide React y Recharts.
 - Backend: Node.js 20+, Express 5, Prisma 6.19, JWT, bcrypt, CORS, dotenv y Nodemailer.
 - Base de datos local: SQLite.
