@@ -416,9 +416,6 @@ Casos de prueba cubiertos en `cypress/e2e/`:
 
 | Caso | Archivo | Descripción del Escenario |
 | --- | --- | --- |
-| Cliente | `cliente@fitconnection.com` | `cliente123` |
-| Entrenador | `entrenador@fitconnection.com` | `entrenador123` |
-| Administrador | `admin@fitconnection.com` | `admin123` |
 | CP01 | `cp01-registro-exitoso.cy.js` | Registro exitoso de usuario con validación de edad y redirección |
 | CP02 | `cp02-registro-campos-vacios.cy.js` | Rechazo de envío y retroalimentación de campos requeridos |
 | CP03 | `cp03-registro-menor-edad.cy.js` | Restricción automática de marketplace para clientes menores de 18 años |
