@@ -86,14 +86,6 @@ desea y gestione turnos, pagos y comunicación dentro de una misma plataforma.
 
 ```text
 fitconnection/
-  backend/
-  frontend/
-  README.md
-  GESTION_CONFIGURACION.md
-  VERSIONES.md
-  MAPEO_HISTORIAS_ARCHIVOS.md
-  .gitignore
-  package.json
   backend/                  # API REST Express + Prisma ORM
     prisma/                 # Schemas (SQLite y PostgreSQL), migraciones y seed
     src/                    # Controladores, rutas, servicios, middlewares y utilidades
